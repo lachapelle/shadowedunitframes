@@ -670,5 +670,5 @@ L["You will need to do a /console reloadui before a hidden frame becomes visible
 L["Zone configuration"] = "Gebiet Konfiguration"
 L["Zone configuration units"] = "Gebiet Konfiguration - Einheiten"
 
-local ShadowUF = select(2, ...)
+--local ShadowUF = select(2, ...)
 ShadowUF.L = setmetatable(L, {__index = ShadowUF.L})

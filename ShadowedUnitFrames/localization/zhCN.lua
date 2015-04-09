@@ -667,5 +667,5 @@ L["You will need to create an aura filter before you can set which unit to enabl
 L["You will need to do a /console reloadui before a hidden frame becomes visible again.|nPlayer and other unit frames are automatically hidden depending on if you enable the unit in Shadowed Unit Frames."] = "在隐藏框体重新变为可见之前你需要通过命令行 /console reloadui 来重载插件.|n玩家和其他的头像将依据你是否在插件里启用来自动隐藏."
 L["Zone configuration"] = "区域配置"
 
-local ShadowUF = select(2, ...)
+--local ShadowUF = select(2, ...)
 ShadowUF.L = setmetatable(L, {__index = ShadowUF.L})

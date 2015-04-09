@@ -66,7 +66,7 @@ end
 function Indicators:UpdateLFDRole(frame, event)
 	if( not frame.indicators.lfdRole or not frame.indicators.lfdRole.enabled ) then return end
 	
-	local isTank, isHealer, isDamage = UnitGroupRolesAssigned(frame.unitOwner)
+	local isTank, isHealer, isDamage = nil
 	if( isTank ) then
 		frame.indicators.lfdRole:SetTexCoord(0, 19/64, 22/64, 41/64)
 		frame.indicators.lfdRole:Show()

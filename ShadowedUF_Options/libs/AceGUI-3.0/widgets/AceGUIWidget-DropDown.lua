@@ -1,19 +1,7 @@
---[[ $Id: AceGUIWidget-DropDown.lua 916 2010-03-15 12:24:36Z nevcairiel $ ]]--
-local AceGUI = LibStub("AceGUI-3.0")
-
--- Lua APIs
+--[[ $Id: AceGUIWidget-DropDown.lua 679 2008-09-06 12:51:18Z nargiddley $ ]]--
 local min, max, floor = math.min, math.max, math.floor
-local select, pairs, ipairs = select, pairs, ipairs
-local tsort = table.sort
 
--- WoW APIs
-local PlaySound = PlaySound
-local UIParent, CreateFrame = UIParent, CreateFrame
-local _G = _G
-
--- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
--- List them here for Mikk's FindGlobals script
--- GLOBALS: CLOSE
+local AceGUI = LibStub("AceGUI-3.0")
 
 local function fixlevels(parent,...)
 	local i = 1
@@ -39,12 +27,12 @@ end
 
 do
 	local widgetType = "Dropdown-Pullout"
-	local widgetVersion = 3
+	local widgetVersion = 2
 	
 	--[[ Static data ]]--
 	
 	local backdrop = {
-		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
 		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
 		edgeSize = 32,
 		tileSize = 32,
@@ -354,9 +342,9 @@ do
 	AceGUI:RegisterWidgetType(widgetType, Constructor, widgetVersion)
 end
 
-do
+do 
 	local widgetType = "Dropdown"
-	local widgetVersion = 22
+	local widgetVersion = 18
 	
 	--[[ Static data ]]--
 	
@@ -379,7 +367,6 @@ do
 	
 	local function Dropdown_TogglePullout(this)
 		local self = this.obj
-		PlaySound("igMainMenuOptionCheckBoxOn") -- missleading name, but the Blizzard code uses this sound
 		if self.open then
 			self.open = nil
 			self.pullout:Close()
@@ -457,9 +444,6 @@ do
 		pullout:SetCallback("OnOpen", OnPulloutOpen)
 		self.pullout.frame:SetFrameLevel(self.frame:GetFrameLevel() + 1)
 		fixlevels(self.pullout.frame, self.pullout.frame:GetChildren())
-		
-		self:SetHeight(44)
-		self:SetWidth(200)
 	end
 	
 	-- exported, AceGUI callback
@@ -468,7 +452,6 @@ do
 			self.pullout:Close()
 		end
 		AceGUI:Release(self.pullout)
-		self.pullout = nil
 		
 		self:SetText("")
 		self:SetLabel("")
@@ -476,12 +459,12 @@ do
 		self:SetMultiselect(false)
 		
 		self.value = nil
-		self.list = nil
+		self.list = nil		
 		self.open = nil
 		self.hasClose = nil
 		
 		self.frame:ClearAllPoints()
-		self.frame:Hide()
+		self.frame:Hide()		
 	end
 	
 	-- exported
@@ -534,11 +517,6 @@ do
 	end
 	
 	-- exported
-	local function GetValue(self)
-		return self.value
-	end
-	
-	-- exported
 	local function SetItemValue(self, item, value)
 		if not self.multiselect then return end
 		for i, widget in self.pullout:IterateItems() do
@@ -574,7 +552,7 @@ do
 			local close = AceGUI:Create("Dropdown-Item-Execute")
 			close:SetText(CLOSE)
 			self.pullout:AddItem(close)
-			self.hasClose = true
+			self.hasClose = true		
 		end
 	end
 	
@@ -589,7 +567,7 @@ do
 		for v in pairs(list) do
 			sortlist[#sortlist + 1] = v
 		end
-		tsort(sortlist)
+		table.sort(sortlist)
 		
 		for i, value in pairs(sortlist) do
 			AddListItem(self, value, list[value])
@@ -645,7 +623,6 @@ do
 
 		self.SetText     = SetText
 		self.SetValue    = SetValue
-		self.GetValue    = GetValue
 		self.SetList     = SetList
 		self.SetLabel    = SetLabel
 		self.SetDisabled = SetDisabled

@@ -537,5 +537,5 @@ L["You must enter a tag name."] = "Vous devez entrer un nom de tag."
 L["You must wrap your code in a function."] = "Vous devez placer votre code dans une fonction."
 L["Zone configuration"] = "Config. selon zone"
 
-local ShadowUF = select(2, ...)
+--local ShadowUF = select(2, ...)
 ShadowUF.L = setmetatable(L, {__index = ShadowUF.L})

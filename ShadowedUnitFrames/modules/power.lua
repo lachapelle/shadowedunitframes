@@ -2,7 +2,7 @@ local Power = {}
 ShadowUF:RegisterModule(Power, "powerBar", ShadowUF.L["Power bar"], true)
 
 local function updatePower(self, elapsed)
-	local currentPower = UnitPower(self.parent.unit)
+	local currentPower = UnitMana(self.parent.unit)
 	if( currentPower == self.currentPower ) then return end
 	self.currentPower = currentPower
 
@@ -69,7 +69,7 @@ function Power:UpdateColor(frame)
 end
 
 function Power:Update(frame)
-	frame.powerBar.currentPower = UnitPower(frame.unit)
-	frame.powerBar:SetMinMaxValues(0, UnitPowerMax(frame.unit))
+	frame.powerBar.currentPower = UnitMana(frame.unit)
+	frame.powerBar:SetMinMaxValues(0, UnitManaMax(frame.unit))
 	frame.powerBar:SetValue(UnitIsDeadOrGhost(frame.unit) and 0 or not UnitIsConnected(frame.unit) and 0 or frame.powerBar.currentPower)
 end

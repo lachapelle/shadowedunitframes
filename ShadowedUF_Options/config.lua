@@ -4,6 +4,8 @@ local playerClass = select(2, UnitClass("player"))
 local modifyUnits, globalConfig = {}, {}
 local L = ShadowUF.L
 
+local LOCALIZED_CLASS_NAMES_MALE = {}
+
 ShadowUF.Config = Config
 
 --[[
@@ -4159,8 +4161,8 @@ local function loadFilterOptions()
 		hasBlacklist = true
 		hasWhitelist = true
 	
-		table.wipe(filterMap)
-		table.wipe(spellMap)
+		filterMap = {}
+		spellMap = {}
 		
 		options.args.filter.args.filters.args.whitelists = buildList("whitelists")
 		options.args.filter.args.filters.args.blacklists = buildList("blacklists")

@@ -600,5 +600,5 @@ L["You must enter a tag name."] = "반드시 태그 이름을 입력해야합니
 L["You will need to create an aura filter before you can set which unit to enable aura filtering on."] = "설정한 오라 필터링을 사용하기 위해 오라 필터를 만들어야 합니다. "
 L["Zone configuration"] = "지역 설정"
 
-local ShadowUF = select(2, ...)
+--local ShadowUF = select(2, ...)
 ShadowUF.L = setmetatable(L, {__index = ShadowUF.L})

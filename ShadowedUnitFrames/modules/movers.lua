@@ -1,4 +1,15 @@
 -- I am undecided if this is a brilliant idea or an insane one
+CLASS_SORT_ORDER = {
+    "WARRIOR",
+    "PALADIN",
+    "PRIEST",
+    "SHAMAN",
+    "DRUID",
+    "ROGUE",
+    "MAGE",
+    "WARLOCK",
+    "HUNTER",
+}
 local L = ShadowUF.L
 local Movers = {}
 local originalEnvs = {}
@@ -99,7 +110,7 @@ local function createConfigEnv()
 		end,
 		UnitClass = function(unit)
 			local classToken = getValue("UnitClass", unit, CLASS_SORT_ORDER[math.random(1, #(CLASS_SORT_ORDER))])
-			return LOCALIZED_CLASS_NAMES_MALE[classToken], classToken
+			return CLASS_SORT_ORDER[classToken], classToken
 		end,
 	}, {
 		__index = _G,

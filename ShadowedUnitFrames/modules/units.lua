@@ -1,8 +1,8 @@
 local Units = {headerFrames = {}, unitFrames = {}, frameList = {}, unitEvents = {}}
-Units.childUnits = {["partytarget"] = "party", ["partypet"] = "party", ["maintanktarget"] = "maintank", ["mainassisttarget"] = "mainassist", ["bosstarget"] = "boss", ["arenatarget"] = "arena", ["arenapet"] = "arena"}
-Units.zoneUnits = {["arena"] = "arena", ["boss"] = "raid"}
+Units.childUnits = {["partytarget"] = "party", ["partypet"] = "party", ["maintanktarget"] = "maintank", ["mainassisttarget"] = "mainassist", ["arenatarget"] = "arena", ["arenapet"] = "arena"}
+Units.zoneUnits = {["arena"] = "arena"}
 
-local stateMonitor = CreateFrame("Frame", nil, nil, "SecureHandlerBaseTemplate")
+--local stateMonitor = CreateFrame("Frame", nil, nil, "SecureHandlerBaseTemplate")
 local playerClass = select(2, UnitClass("player"))
 local unitFrames, headerFrames, frameList, unitEvents, childUnits, queuedCombat = Units.unitFrames, Units.headerFrames, Units.frameList, Units.unitEvents, Units.childUnits, {}
 local _G = getfenv(0)
@@ -399,8 +399,6 @@ OnAttributeChanged = function(self, name, unit)
 	self.unitRealType = string.gsub(unit, "([0-9]+)", "")
 	self.unitType = self.unitType or self.unitRealType
 	self.unitOwner = unit
-	self.vehicleUnit = self.unitOwner == "player" and "vehicle" or self.unitRealType == "party" and "partypet" .. self.unitID or self.unitRealType == "raid" and "raidpet" .. self.unitID or nil
-	self.inVehicle = nil
 	
 	-- Split everything into two maps, this is the simple parentUnit -> frame map
 	-- This is for things like finding a party parent for party target/pet, the main map for doing full updates is
@@ -432,47 +430,8 @@ OnAttributeChanged = function(self, name, unit)
 	ClickCastFrames = ClickCastFrames or {}
 	ClickCastFrames[self] = true
 	
-	-- Handles switching the internal unit variable to that of their vehicle
-	if( self.unit == "player" or self.unitRealType == "party" or self.unitRealType == "raid" ) then
-		self:RegisterNormalEvent("UNIT_ENTERED_VEHICLE", Units, "CheckVehicleStatus")
-		self:RegisterNormalEvent("UNIT_EXITED_VEHICLE", Units, "CheckVehicleStatus")
-		self:RegisterUpdateFunc(Units, "CheckVehicleStatus")
-	end	
-	
-	-- Pet changed, going from pet -> vehicle for one
-	if( self.unit == "pet" or self.unitType == "partypet" ) then
-		self.unitRealOwner = self.unit == "pet" and "player" or ShadowUF.partyUnits[self.unitID]
-		self:RegisterNormalEvent("UNIT_PET", Units, "CheckPetUnitUpdated")
-		
-		if( self.unit == "pet" ) then
-			self:SetAttribute("disableVehicleSwap", ShadowUF.db.profile.units.player.disableVehicle)
-		else
-			self:SetAttribute("disableVehicleSwap", ShadowUF.db.profile.units.party.disableVehicle)
-		end
-	
-		-- Logged out in a vehicle
-		if( UnitHasVehicleUI(self.unitRealOwner) ) then
-			self:SetAttribute("unitIsVehicle", true)
-		end
-		
-		-- Hide any pet that became a vehicle, we detect this by the owner being untargetable but they have a pet out
-		stateMonitor:WrapScript(self, "OnAttributeChanged", [[
-			if( name == "state-vehicleupdated" ) then
-				self:SetAttribute("unitIsVehicle", value == "vehicle" and true or false)
-			elseif( name == "disablevehicleswap" or name == "state-unitexists" or name == "unitisvehicle" ) then
-				-- Unit does not exist, OR unit is a vehicle and vehicle swap is not disabled, hide frame
-				if( not self:GetAttribute("state-unitexists") or ( self:GetAttribute("unitIsVehicle") and not self:GetAttribute("disableVehicleSwap") ) ) then
-					self:Hide()
-				-- Unit exists, show it
-				else
-					self:Show()
-				end
-			end
-		]])
-		RegisterStateDriver(self, "vehicleupdated", string.format("[target=%s, nohelp, noharm] vehicle; pet", self.unitRealOwner, self.unit))
-
 	-- Automatically do a full update on target change
-	elseif( self.unit == "target" ) then
+	if( self.unit == "target" ) then
 		self.isUnitVolatile = true
 		self:RegisterNormalEvent("PLAYER_TARGET_CHANGED", Units, "CheckUnitStatus")
 
@@ -482,17 +441,10 @@ OnAttributeChanged = function(self, name, unit)
 		self:RegisterNormalEvent("PLAYER_FOCUS_CHANGED", Units, "CheckUnitStatus")
 				
 	elseif( self.unit == "player" ) then
-		self:SetAttribute("toggleForVehicle", true)
-		
+
 		-- Force a full update when the player is alive to prevent freezes when releasing in a zone that forces a ressurect (naxx/tk/etc)
 		self:RegisterNormalEvent("PLAYER_ALIVE", self, "FullUpdate")
 	
-	-- Update boss
-	elseif( self.unitType == "boss" ) then
-		self.timeElapsed = 0
-		self:SetScript("OnUpdate", TargetUnitUpdate)
-		self:RegisterNormalEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT", self, "FullUpdate")
-		
 	-- Check for a unit guid to do a full update
 	elseif( self.unitRealType == "raid" ) then
 		self:RegisterNormalEvent("RAID_ROSTER_UPDATE", Units, "CheckGroupedUnitStatus")
@@ -544,7 +496,6 @@ local function initializeUnit(self)
 	self:SetAttribute("initial-height", config.height)
 	self:SetAttribute("initial-width", config.width)
 	self:SetAttribute("initial-scale", config.scale)
-	self:SetAttribute("toggleForVehicle", true)
 	
 	Units:CreateUnit(self)
 end
@@ -778,8 +729,8 @@ function Units:SetHeaderAttributes(frame, type)
 		self:CheckGroupVisibility()
 		
 		-- Need to update our flags on the state monitor so it knows what to do
-		stateMonitor:SetAttribute("hideSemiRaid", ShadowUF.db.profile.units.party.hideSemiRaid)
-		stateMonitor:SetAttribute("hideAnyRaid", ShadowUF.db.profile.units.party.hideAnyRaid)
+--		stateMonitor:SetAttribute("hideSemiRaid", ShadowUF.db.profile.units.party.hideSemiRaid)
+--		stateMonitor:SetAttribute("hideAnyRaid", ShadowUF.db.profile.units.party.hideAnyRaid)
 	end
 end
 
@@ -856,7 +807,7 @@ function Units:LoadGroupHeader(type)
 		headerFrames[type]:Show()
 		
 		if( type == "party" ) then
-			stateMonitor:SetAttribute("partyDisabled", nil)
+--			stateMonitor:SetAttribute("partyDisabled", nil)
 		end
 		
 		if( type == "party" or type == "raid" ) then
@@ -883,20 +834,7 @@ function Units:LoadGroupHeader(type)
 	-- technically this isn't the cleanest solution because party frames will still have unit watches active
 	-- but this isn't as big of a deal, because SUF automatically will unregister the OnEvent for party frames while hidden
 	if( type == "party" ) then
-		stateMonitor:SetFrameRef("partyHeader", headerFrame)
-		stateMonitor:WrapScript(stateMonitor, "OnAttributeChanged", [[
-			if( name ~= "state-raidmonitor" and name ~= "partydisabled" and name ~= "hideanyraid" and name ~= "hidesemiraid" ) then return end
-			if( self:GetAttribute("partyDisabled") ) then return end
-			
-			if( self:GetAttribute("hideAnyRaid") and ( self:GetAttribute("state-raidmonitor") == "raid1" or self:GetAttribute("state-raidmonitor") == "raid6" ) ) then
-				self:GetFrameRef("partyHeader"):Hide()
-			elseif( self:GetAttribute("hideSemiRaid") and self:GetAttribute("state-raidmonitor") == "raid6" ) then
-				self:GetFrameRef("partyHeader"):Hide()
-			else
-				self:GetFrameRef("partyHeader"):Show()
-			end
-		]])
-		RegisterStateDriver(stateMonitor, "raidmonitor", "[target=raid6, exists] raid6; [target=raid1, exists] raid1; none")
+--		RegisterStateDriver(stateMonitor, "raidmonitor", "[target=raid6, exists] raid6; [target=raid1, exists] raid1; none")
 	else
 		headerFrame:Show()
 	end
@@ -936,30 +874,7 @@ function Units:LoadZoneHeader(type)
 		
 		-- Arena frames are only allowed to be shown not hidden from the unit existing, or else when a Rogue
 		-- stealths the frame will hide which looks bad. Instead force it to stay open and it has to be manually hidden when the player leaves an arena.
-		if( type == "arena" ) then
-			frame:SetAttribute("unitID", id)
-			frame.hasStateWatch = true
 
-			stateMonitor:WrapScript(frame, "OnAttributeChanged", [[
-				if( name == "state-unitexists" ) then
-					local parent = self:GetParent()
-					if( value and self:GetAttribute("unitDisappeared") ) then
-						parent:SetAttribute("childChanged", self:GetAttribute("unitID"))
-						self:SetAttribute("unitDisappeared", nil)
-					elseif( not value and not self:GetAttribute("unitDisappeared") ) then
-						self:SetAttribute("unitDisappeared", true)
-					end
-					
-					if( value ) then
-						self:Show()
-					end
-				end
-			]])
-		
-			RegisterUnitWatch(frame, frame.hasStateWatch)
-		else
-			RegisterUnitWatch(frame)
- 		end
  	end
 	
 
@@ -1027,7 +942,7 @@ end
 function Units:UninitializeFrame(type)
 	-- Disables showing party in raid automatically if raid frames are disabled
 	if( type == "party" ) then
-		stateMonitor:SetAttribute("partyDisabled", true)
+--		stateMonitor:SetAttribute("partyDisabled", true)
 	end
 	if( type == "party" or type == "raid" ) then
 		self:CheckGroupVisibility()
@@ -1102,7 +1017,7 @@ function Units:CreateBar(parent)
 	bar.background:SetHeight(1)
 	bar.background:SetWidth(1)
 	bar.background:SetAllPoints(bar)
-	bar.background:SetHorizTile(false)
+--	bar.background:SetHorizTile(false)
 
 	return bar
 end
@@ -1116,7 +1031,7 @@ function Units:CheckPlayerZone(force)
 	end
 	
 	-- CanHearthAndResurrectFromArea() returns true for world pvp areas, according to BattlefieldFrame.lua
-	local instance = CanHearthAndResurrectFromArea() and "pvp" or select(2, IsInInstance())
+	local instance = select(2, IsInInstance())
 	if( instance == instanceType and not force ) then return end
 	instanceType = instance
 	

@@ -477,13 +477,13 @@ Tags.defaultTags = {
 		return string.format("%s%s|r", color, name)
 	end]],
 	["curpp"] = [[function(unit, unitOwner) 
-		if( UnitPowerMax(unit) <= 0 ) then
+		if( UnitManaMax(unit) <= 0 ) then
 			return nil
 		elseif( UnitIsDeadOrGhost(unit) ) then
 			return 0
 		end
 		
-		return ShadowUF:FormatLargeNumber(UnitPower(unit))
+		return ShadowUF:FormatLargeNumber(UnitMana(unit))
 	end]],
 	["curmaxhp"] = [[function(unit, unitOwner)
 		if( UnitIsDead(unit) ) then
@@ -531,21 +531,21 @@ Tags.defaultTags = {
 	end]],
 	["absmaxhp"] = [[function(unit, unitOwner) return UnitHealthMax(unit) end]],
 	["abscurpp"] = [[function(unit, unitOwner)
-		if( UnitPowerMax(unit) <= 0 ) then
+		if( UnitManaMax(unit) <= 0 ) then
 			return nil
 		elseif( UnitIsDeadOrGhost(unit) ) then
 			return 0
 		end	
 	
-		return UnitPower(unit)
+		return UnitMana(unit)
 	end]],
 	["absmaxpp"] = [[function(unit, unitOwner)
-		local power = UnitPowerMax(unit)
+		local power = UnitManaMax(unit)
 		return power > 0 and power or nil
 	end]],
 	["absolutepp"] = [[function(unit, unitOwner)
-		local maxPower = UnitPowerMax(unit)
-		local power = UnitPower(unit)
+		local maxPower = UnitManaMax(unit)
+		local power = UnitMana(unit)
 		if( UnitIsDeadOrGhost(unit) ) then
 			return string.format("0/%s", maxPower)
 		elseif( maxPower <= 0 ) then
@@ -555,8 +555,8 @@ Tags.defaultTags = {
 		return string.format("%s/%s", power, maxPower)
 	end]],
 	["curmaxpp"] = [[function(unit, unitOwner)
-		local maxPower = UnitPowerMax(unit)
-		local power = UnitPower(unit)
+		local maxPower = UnitManaMax(unit)
+		local power = UnitMana(unit)
 		if( UnitIsDeadOrGhost(unit) ) then
 			return string.format("0/%s", ShadowUF:FormatLargeNumber(maxPower))
 		elseif( maxPower <= 0 ) then
@@ -566,8 +566,8 @@ Tags.defaultTags = {
 		return string.format("%s/%s", ShadowUF:FormatLargeNumber(power), ShadowUF:FormatLargeNumber(maxPower))
 	end]],
 	["smart:curmaxpp"] = [[function(unit, unitOwner)
-		local maxPower = UnitPowerMax(unit)
-		local power = UnitPower(unit)
+		local maxPower = UnitManaMax(unit)
+		local power = UnitMana(unit)
 		if( UnitIsDeadOrGhost(unit) ) then
 			return string.format("0/%s", maxPower)
 		elseif( maxPower <= 0 ) then
@@ -600,7 +600,7 @@ Tags.defaultTags = {
 	end]],
 	["maxhp"] = [[function(unit, unitOwner) return ShadowUF:FormatLargeNumber(UnitHealthMax(unit)) end]],
 	["maxpp"] = [[function(unit, unitOwner)
-		local power = UnitPowerMax(unit)
+		local power = UnitManaMax(unit)
 		if( power <= 0 ) then
 			return nil
 		elseif( UnitIsDeadOrGhost(unit) ) then
@@ -623,12 +623,12 @@ Tags.defaultTags = {
 		return "-" .. ShadowUF:FormatLargeNumber(missing) 
 	end]],
 	["missingpp"] = [[function(unit, unitOwner)
-		local power = UnitPowerMax(unit)
+		local power = UnitManaMax(unit)
 		if( power <= 0 ) then
 			return nil
 		end
 
-		local missing = power - UnitPower(unit)
+		local missing = power - UnitMana(unit)
 		if( missing <= 0 ) then return nil end
 		return "-" .. ShadowUF:FormatLargeNumber(missing)
 	end]],
@@ -652,14 +652,14 @@ Tags.defaultTags = {
 		return math.floor(UnitHealth(unit) / max * 100 + 0.5) .. "%"
 	end]],
 	["perpp"] = [[function(unit, unitOwner)
-		local maxPower = UnitPowerMax(unit)
+		local maxPower = UnitManaMax(unit)
 		if( maxPower <= 0 ) then
 			return nil
 		elseif( UnitIsDeadOrGhost(unit) or not UnitIsConnected(unit) ) then
 			return "0%"
 		end
 		
-		return string.format("%d%%", math.floor(UnitPower(unit) / maxPower * 100 + 0.5))
+		return string.format("%d%%", math.floor(UnitMana(unit) / maxPower * 100 + 0.5))
 	end]],
 	["plus"] = [[function(unit, unitOwner) local classif = UnitClassification(unit) return (classif == "elite" or classif == "rareelite") and "+" end]],
 	["race"] = [[function(unit, unitOwner) return UnitRace(unit) end]],
@@ -734,23 +734,23 @@ Tags.defaultTags = {
 	end]],
 	["druid:curpp"] = [[function(unit, unitOwner)
 		if( select(2, UnitClass(unit)) ~= "DRUID" ) then return nil end
-		local powerType = UnitPowerType(unit)
+		local powerType = UnitManaType(unit)
 		if( powerType ~= 1 and powerType ~= 3 ) then return nil end
-		return ShadowUF:FormatLargeNumber(UnitPower(unit, 0))
+		return ShadowUF:FormatLargeNumber(UnitMana(unit, 0))
 	end]],
 	["druid:abscurpp"] = [[function(unit, unitOwner)
 		if( select(2, UnitClass(unit)) ~= "DRUID" ) then return nil end
-		local powerType = UnitPowerType(unit)
+		local powerType = UnitManaType(unit)
 		if( powerType ~= 1 and powerType ~= 3 ) then return nil end
-		return UnitPower(unit, 0)
+		return UnitMana(unit, 0)
 	end]],
 	["druid:curmaxpp"] = [[function(unit, unitOwner)
 		if( select(2, UnitClass(unit)) ~= "DRUID" ) then return nil end
-		local powerType = UnitPowerType(unit)
+		local powerType = UnitManaType(unit)
 		if( powerType ~= 1 and powerType ~= 3 ) then return nil end
 		
-		local maxPower = UnitPowerMax(unit, 0)
-		local power = UnitPower(unit, 0)
+		local maxPower = UnitManaMax(unit, 0)
+		local power = UnitMana(unit, 0)
 		if( UnitIsDeadOrGhost(unit) ) then
 			return string.format("0/%s", ShadowUF:FormatLargeNumber(maxPower))
 		elseif( maxPower == 0 and power == 0 ) then
@@ -761,9 +761,9 @@ Tags.defaultTags = {
 	end]],
 	["druid:absolutepp"] = [[function(unit, unitOwner)
 		if( select(2, UnitClass(unit)) ~= "DRUID" ) then return nil end
-		local powerType = UnitPowerType(unit)
+		local powerType = UnitManaType(unit)
 		if( powerType ~= 1 and powerType ~= 3 ) then return nil end
-		return UnitPower(unit, 0)
+		return UnitMana(unit, 0)
 	end]],
 	["abs:incheal"] = [[function(unit, unitOwner, fontString)
 		return fontString.incoming and string.format("%d", fontString.incoming)
@@ -1147,9 +1147,9 @@ local function loadAPIEvents()
 		["UnitFactionGroup"]		= "UNIT_FACTION PLAYER_FLAGS_CHANGED",
 		["UnitHealth%("]			= "UNIT_HEALTH",
 		["UnitHealthMax"]			= "UNIT_MAXHEALTH",
-		["UnitPower%("]				= "UNIT_ENERGY UNIT_FOCUS UNIT_MANA UNIT_RAGE UNIT_RUNIC_POWER",
-		["UnitPowerMax"]			= "UNIT_MAXENERGY UNIT_MAXFOCUS UNIT_MAXMANA UNIT_MAXRAGE UNIT_MAXRUNIC_POWER",
-		["UnitPowerType"]			= "UNIT_DISPLAYPOWER",
+		["UnitMana%("]				= "UNIT_ENERGY UNIT_FOCUS UNIT_MANA UNIT_RAGE UNIT_RUNIC_POWER",
+		["UnitManaMax"]				= "UNIT_MAXENERGY UNIT_MAXFOCUS UNIT_MAXMANA UNIT_MAXRAGE UNIT_MAXRUNIC_POWER",
+		["UnitManaType"]			= "UNIT_DISPLAYPOWER",
 		["UnitIsDead"]				= "UNIT_HEALTH",
 		["UnitIsGhost"]				= "UNIT_HEALTH",
 		["UnitIsConnected"]			= "UNIT_HEALTH",

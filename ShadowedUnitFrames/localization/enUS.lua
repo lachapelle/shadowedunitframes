@@ -1,4 +1,4 @@
-local ShadowUF = select(2, ...)
+ShadowUF = {}
 local L = {}
 L["2D"] = "2D"
 L["3D"] = "3D"

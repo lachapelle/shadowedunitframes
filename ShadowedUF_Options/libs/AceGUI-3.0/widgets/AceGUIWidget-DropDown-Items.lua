@@ -1,13 +1,6 @@
---[[ $Id: AceGUIWidget-DropDown-Items.lua 916 2010-03-15 12:24:36Z nevcairiel $ ]]--
+--[[ $Id: AceGUIWidget-DropDown-Items.lua 656 2008-05-31 11:47:08Z nargiddley $ ]]--
 
 local AceGUI = LibStub("AceGUI-3.0")
-
--- Lua APIs
-local select, assert = select, assert
-
--- WoW APIs
-local PlaySound = PlaySound
-local CreateFrame = CreateFrame
 
 local function fixlevels(parent,...)
 	local i = 1
@@ -317,7 +310,7 @@ end
 -- Does not close the pullout on click.
 do
 	local widgetType = "Dropdown-Item-Toggle"
-	local widgetVersion = 3
+	local widgetVersion = 2
 	
 	local function UpdateToggle(self)
 		if self.value then
@@ -336,11 +329,6 @@ do
 		local self = this.obj
 		if self.disabled then return end
 		self.value = not self.value
-		if self.value then
-			PlaySound("igMainMenuOptionCheckBoxOn")
-		else
-			PlaySound("igMainMenuOptionCheckBoxOff")
-		end
 		UpdateToggle(self)
 		self:Fire("OnValueChanged", self.value)
 	end
@@ -377,7 +365,7 @@ end
 -- Does not close the pullout on click
 do
 	local widgetType = "Dropdown-Item-Menu"
-	local widgetVersion = 2
+	local widgetVersion = 1
 	
 	local function OnEnter(this)
 		local self = this.obj
@@ -402,13 +390,13 @@ do
 	end
 	
 	-- exported
-	local function SetMenu(self, menu)
+	function SetMenu(self, menu)
 		assert(menu.type == "Dropdown-Pullout")
 		self.submenu = menu
 	end
 		
 	-- exported
-	local function CloseMenu(self)
+	function CloseMenu(self)
 		self.submenu:Close()
 	end
 		

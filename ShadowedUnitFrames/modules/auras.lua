@@ -1,6 +1,6 @@
 local Auras = {}
 local stealableColor = {r = 1, g = 1, b = 1}
-local playerUnits = {player = true, vehicle = true, pet = true}
+local playerUnits = {player = true, pet = true}
 local mainHand, offHand = {time = 0}, {time = 0}
 local tempEnchantScan
 ShadowUF:RegisterModule(Auras, "auras", ShadowUF.L["Auras"])
@@ -178,7 +178,11 @@ end
 -- Updates the X seconds left on aura tooltip while it's shown
 local function updateTooltip(self)
 	if( GameTooltip:IsOwned(self) ) then
-		GameTooltip:SetUnitAura(self.unit, self.auraID, self.filter)
+		if self.filter == "HELPFUL" then
+			GameTooltip:SetUnitBuff(self.unit, self.auraID)
+		else
+			GameTooltip:SetUnitDebuff(self.unit, self.auraID)
+		end
 	end
 end
 
@@ -190,7 +194,11 @@ local function showTooltip(self)
 		GameTooltip:SetInventoryItem("player", self.auraID)
 		self:SetScript("OnUpdate", nil)
 	else
-		GameTooltip:SetUnitAura(self.unit, self.auraID, self.filter)
+		if self.filter == "HELPFUL" then
+			GameTooltip:SetUnitBuff(self.unit, self.auraID)
+		else
+			GameTooltip:SetUnitDebuff(self.unit, self.auraID)
+		end
 		self:SetScript("OnUpdate", updateTooltip)
 	end
 end
@@ -481,12 +489,23 @@ local function scan(parent, frame, type, config, filter)
 
 	local isFriendly = UnitIsFriend(frame.parent.unit, "player")
 	local index = 0
+	local name, rank, texture, count, auraType, duration, endTime, isStealable
 	while( true ) do
-		index = index + 1
-		local name, rank, texture, count, auraType, duration, endTime, caster, isStealable = UnitAura(frame.parent.unit, index, filter)
+		index = index + 1 
+		if filter == "HELPFUL" then
+			name, rank, texture, count, auraType, duration, endTime = UnitBuff(frame.parent.unit, index)
+		else
+			name, rank, texture, count, auraType, duration, endTime = UnitDebuff(frame.parent.unit, index)
+		end
+		if not endTime then
+			endTime = 0
+		end
+		if not duration then
+			duration = 0
+		end
 		if( not name ) then break end
 		
-		if( ( not config.player or playerUnits[caster] ) and ( not parent.whitelist[type] and not parent.blacklist[type] or parent.whitelist[type] and parent.whitelist[name] or parent.blacklist[type] and not parent.blacklist[name] ) ) then
+		if( ( not config.player ) and ( not parent.whitelist[type] and not parent.blacklist[type] or parent.whitelist[type] and parent.whitelist[name] or parent.blacklist[type] and not parent.blacklist[name] ) ) then
 			-- Create any buttons we need
 			frame.totalAuras = frame.totalAuras + 1
 			if( #(frame.buttons) < frame.totalAuras ) then
@@ -505,7 +524,7 @@ local function scan(parent, frame, type, config, filter)
 			end
 			
 			-- Show the cooldown ring
-			if( not ShadowUF.db.profile.auras.disableCooldown and duration > 0 and endTime > 0 and ( not config.selfTimers or ( config.selfTimers and playerUnits[caster] ) ) ) then
+			if( not ShadowUF.db.profile.auras.disableCooldown and duration > 0 and endTime > 0 and ( not config.selfTimers or ( config.selfTimers ) ) ) then
 				button.cooldown:SetCooldown(endTime - duration, duration)
 				button.cooldown:Show()
 			else
@@ -513,7 +532,7 @@ local function scan(parent, frame, type, config, filter)
 			end
 			
 			-- Enlarge our own auras
-			if( config.enlargeSelf and playerUnits[caster] ) then
+			if( config.enlargeSelf ) then
 				button.isSelfScaled = true
 				button:SetScale(config.selfScale)
 			else

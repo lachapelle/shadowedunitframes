@@ -2,7 +2,7 @@
 	Shadowed Unit Frames, Shadow of Mal'Ganis (US) PvP
 ]]
 
-ShadowUF = select(2, ...)
+--ShadowUF = select(2, ...)
 local L = ShadowUF.L
 ShadowUF.dbRevision = 1
 ShadowUF.playerUnit = "player"
@@ -21,7 +21,7 @@ ShadowUF.maintankUnits, ShadowUF.mainassistUnits, ShadowUF.raidpetUnits = Shadow
 for i=1, MAX_PARTY_MEMBERS do ShadowUF.partyUnits[i] = "party" .. i end
 for i=1, MAX_RAID_MEMBERS do ShadowUF.raidUnits[i] = "raid" .. i end
 for i=1, MAX_RAID_MEMBERS do ShadowUF.raidPetUnits[i] = "raidpet" .. i end
-for i=1, MAX_BOSS_FRAMES do ShadowUF.bossUnits[i] = "boss" .. i end
+--for i=1, MAX_BOSS_FRAMES do ShadowUF.bossUnits[i] = "boss" .. i end
 for i=1, 5 do ShadowUF.arenaUnits[i] = "arena" .. i end
 
 function ShadowUF:OnInitialize()
@@ -44,7 +44,7 @@ function ShadowUF:OnInitialize()
 	self:LoadUnitDefaults()
 		
 	-- Initialize DB
-	self.db = LibStub:GetLibrary("AceDB-3.0"):New("ShadowedUFDB", self.defaults, true)
+	self.db = LibStub:GetLibrary("AceDB-3.0"):New("ShadowedUFDB", self.defaults, "default")
 	self.db.RegisterCallback(self, "OnProfileChanged", "ProfilesChanged")
 	self.db.RegisterCallback(self, "OnProfileCopied", "ProfilesChanged")
 	self.db.RegisterCallback(self, "OnProfileReset", "ProfileReset")
@@ -153,7 +153,7 @@ end
 	
 function ShadowUF:LoadUnits()
 	-- CanHearthAndResurrectFromArea() returns true for world pvp areas, according to BattlefieldFrame.lua
-	local instanceType = CanHearthAndResurrectFromArea() and "pvp" or select(2, IsInInstance())
+	local instanceType = select(2, IsInInstance())
 	
 	for _, type in pairs(self.unitList) do
 		local enabled = self.db.profile.units[type].enabled
@@ -403,10 +403,6 @@ end
 -- Stolen from haste
 ShadowUF.noop = function() end
 function ShadowUF:HideBlizzardFrames()
-	if( ShadowUF.db.profile.hidden.runes ) then
-		RuneFrame.Show = self.noop
-		RuneFrame:Hide()
-	end
 	
 	if( ShadowUF.db.profile.hidden.cast ) then
 		CastingBarFrame:UnregisterAllEvents()
@@ -431,8 +427,8 @@ function ShadowUF:HideBlizzardFrames()
 		BuffFrame:UnregisterAllEvents()
 		BuffFrame.Show = self.noop
 		BuffFrame:Hide()
-		ConsolidatedBuffs.Show = self.noop
-		ConsolidatedBuffs:Hide()
+--		ConsolidatedBuffs.Show = self.noop
+--		ConsolidatedBuffs:Hide()
 		TemporaryEnchantFrame.Show = self.noop
 		TemporaryEnchantFrame:Hide()
 	end
@@ -475,17 +471,17 @@ function ShadowUF:HideBlizzardFrames()
 	end
 	
 	if( ShadowUF.db.profile.hidden.focus ) then
-		FocusFrame:UnregisterAllEvents()
+--[[		FocusFrame:UnregisterAllEvents()
 		FocusFrame.Show = self.noop
 		FocusFrame:Hide()
 
 		FocusFrameHealthBar:UnregisterAllEvents()
 		FocusFrameManaBar:UnregisterAllEvents()
-		FocusFrameSpellBar:UnregisterAllEvents()
+		FocusFrameSpellBar:UnregisterAllEvents() --]]
 	end
 		
 	if( ShadowUF.db.profile.hidden.boss ) then
-		for i=1, MAX_BOSS_FRAMES do
+--[[		for i=1, MAX_BOSS_FRAMES do
 			local name = "Boss" .. i .. "TargetFrame"
 			local frame = _G[name]
 
@@ -495,7 +491,7 @@ function ShadowUF:HideBlizzardFrames()
 
 			_G[name .. "HealthBar"]:UnregisterAllEvents()
 			_G[name .. "ManaBar"]:UnregisterAllEvents()
-		end
+		end --]]
 	end
 	
 	if( ShadowUF.db.profile.hidden.arena ) then

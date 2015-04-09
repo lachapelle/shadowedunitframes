@@ -33,7 +33,7 @@ function Combo:OnLayoutApplied(frame, config)
 			frame.comboPoints.blocks[id] = frame.comboPoints.blocks[id] or frame.comboPoints:CreateTexture(nil, "OVERLAY")
 			local texture = frame.comboPoints.blocks[id]
 			texture:SetVertexColor(1, 0.80, 0)
-			texture:SetHorizTile(false)
+--			texture:SetHorizTile(false)
 			texture:SetTexture(ShadowUF.Layout.mediaPath.statusbar)
 			texture:SetHeight(frame.comboPoints:GetHeight())
 			texture:SetWidth(blockWidth)
@@ -107,7 +107,7 @@ end
 
 function Combo:Update(frame)
 	-- For Malygos dragons, they also self cast their CP on themselves, which is why we check CP on ourself!
-	local playerUnit = UnitHasVehicleUI("player") and "vehicle" or "player"
+	local playerUnit = "player"
 	local points = GetComboPoints(playerUnit)
 	if( points == 0 ) then
 		points = GetComboPoints(playerUnit, playerUnit)

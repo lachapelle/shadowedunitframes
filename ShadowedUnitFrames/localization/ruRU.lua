@@ -596,5 +596,5 @@ L["Your active layout is the profile used for import backup, this cannot be over
 L["You will need to create an aura filter before you can set which unit to enable aura filtering on."] = "Вам нужно создать фильтр аур, прежде чем установить рамку, к которой будет применяться фильтрация аур."
 L["Zone configuration"] = "Настройка зон"
 
-local ShadowUF = select(2, ...)
+--local ShadowUF = select(2, ...)
 ShadowUF.L = setmetatable(L, {__index = ShadowUF.L})

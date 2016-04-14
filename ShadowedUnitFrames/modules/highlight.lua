@@ -1,4 +1,5 @@
 local Highlight = {}
+local banzai = LibStub("LibBanzai-2.0")
 local goldColor, mouseColor = {r = 0.75, g = 0.75, b = 0.35}, {r = 0.75, g = 0.75, b = 0.50}
 ShadowUF:RegisterModule(Highlight, "highlight", ShadowUF.L["Highlight"])
 
@@ -21,12 +22,21 @@ local function OnLeave(frame)
 	frame.highlight.OnLeave(frame)
 end
 
+local function callback(aggro, name, ...)
+	for _,frame in pairs(ShadowUF.Units.unitFrames) do
+		if UnitName(frame.unit) == name and UnitIsPlayer(frame.unit) then
+			Highlight:UpdateThreat(frame)
+		end
+	end
+end
+
 function Highlight:OnEnable(frame)
 	if( not frame.highlight ) then
 		frame.highlight = CreateFrame("Frame", nil, frame)
 		frame.highlight:SetFrameLevel(frame.topFrameLevel)
 		frame.highlight:SetAllPoints(frame)
-		frame.highlight:SetSize(1, 1)
+		frame.highlight:SetHeight(1)
+		frame.highlight:SetWidth(1)
 		
 		frame.highlight.top = frame.highlight:CreateTexture(nil, "OVERLAY")
 		frame.highlight.top:SetBlendMode("ADD")
@@ -35,7 +45,6 @@ function Highlight:OnEnable(frame)
 		frame.highlight.top:SetPoint("TOPRIGHT", frame, -ShadowUF.db.profile.backdrop.inset, ShadowUF.db.profile.backdrop.inset)
 		frame.highlight.top:SetHeight(30)
 		frame.highlight.top:SetTexCoord(0.3125, 0.625, 0, 0.3125)
-		frame.highlight.top:SetHorizTile(false)
 		
 		frame.highlight.left = frame.highlight:CreateTexture(nil, "OVERLAY")
 		frame.highlight.left:SetBlendMode("ADD")
@@ -44,7 +53,6 @@ function Highlight:OnEnable(frame)
 		frame.highlight.left:SetPoint("BOTTOMLEFT", frame, -ShadowUF.db.profile.backdrop.inset, ShadowUF.db.profile.backdrop.inset)
 		frame.highlight.left:SetWidth(30)
 		frame.highlight.left:SetTexCoord(0, 0.3125, 0.3125, 0.625)
-		frame.highlight.left:SetHorizTile(false)
 
 		frame.highlight.right = frame.highlight:CreateTexture(nil, "OVERLAY")
 		frame.highlight.right:SetBlendMode("ADD")
@@ -53,7 +61,6 @@ function Highlight:OnEnable(frame)
 		frame.highlight.right:SetPoint("BOTTOMRIGHT", frame, 0, ShadowUF.db.profile.backdrop.inset)
 		frame.highlight.right:SetWidth(30)
 		frame.highlight.right:SetTexCoord(0.625, 0.93, 0.3125, 0.625)
-		frame.highlight.right:SetHorizTile(false)
 
 		frame.highlight.bottom = frame.highlight:CreateTexture(nil, "OVERLAY")
 		frame.highlight.bottom:SetBlendMode("ADD")
@@ -62,7 +69,6 @@ function Highlight:OnEnable(frame)
 		frame.highlight.bottom:SetPoint("BOTTOMRIGHT", frame, -ShadowUF.db.profile.backdrop.inset, ShadowUF.db.profile.backdrop.inset)
 		frame.highlight.bottom:SetHeight(30)
 		frame.highlight.bottom:SetTexCoord(0.3125, 0.625, 0.625, 0.93)
-		frame.highlight.bottom:SetHorizTile(false)
 		frame.highlight:Hide()
 	end
 	
@@ -73,8 +79,7 @@ function Highlight:OnEnable(frame)
 	
 	
 	if( ShadowUF.db.profile.units[frame.unitType].highlight.aggro ) then
-		frame:RegisterUnitEvent("UNIT_THREAT_SITUATION_UPDATE", self, "UpdateThreat")
-		frame:RegisterUpdateFunc(self, "UpdateThreat")
+		banzai:RegisterCallback(callback)
 	end
 	
 	if( ShadowUF.db.profile.units[frame.unitType].highlight.attention and frame.unitType ~= "target" and frame.unitType ~= "focus" ) then
@@ -139,8 +144,10 @@ function Highlight:Update(frame)
 end
 
 function Highlight:UpdateThreat(frame)
-	frame.highlight.hasThreat = UnitThreatSituation(frame.unit) == 3 or nil
-	self:Update(frame)
+	if frame.highlight then
+		frame.highlight.hasThreat = banzai:GetUnitAggroByUnitId(frame.unit)
+		self:Update(frame)
+	end
 end
 
 function Highlight:UpdateAttention(frame)

@@ -1,6 +1,14 @@
 local Power = {}
 ShadowUF:RegisterModule(Power, "powerBar", ShadowUF.L["Power bar"], true)
 
+local POWER_TYPES = {
+	[0] = "MANA",
+	[1] = "RAGE",
+	[2] = "FOCUS",
+	[3] = "ENERGY",
+	[4] = "HAPPINESS",
+}
+
 local function updatePower(self, elapsed)
 	local currentPower = UnitMana(self.parent.unit)
 	if( currentPower == self.currentPower ) then return end
@@ -21,12 +29,10 @@ function Power:OnEnable(frame)
 	frame:RegisterUnitEvent("UNIT_RAGE", self, "Update")
 	frame:RegisterUnitEvent("UNIT_ENERGY", self, "Update")
 	frame:RegisterUnitEvent("UNIT_FOCUS", self, "Update")
-	frame:RegisterUnitEvent("UNIT_RUNIC_POWER", self, "Update")
 	frame:RegisterUnitEvent("UNIT_MAXMANA", self, "Update")
 	frame:RegisterUnitEvent("UNIT_MAXRAGE", self, "Update")
 	frame:RegisterUnitEvent("UNIT_MAXENERGY", self, "Update")
 	frame:RegisterUnitEvent("UNIT_MAXFOCUS", self, "Update")
-	frame:RegisterUnitEvent("UNIT_MAXRUNIC_POWER", self, "Update")
 	frame:RegisterUnitEvent("UNIT_DISPLAYPOWER", self, "UpdateColor")
 
 	frame:RegisterUpdateFunc(self, "UpdateColor")
@@ -49,7 +55,7 @@ function Power:OnDisable(frame)
 end
 
 function Power:UpdateColor(frame)
-	local color = ShadowUF.db.profile.powerColors[select(2, UnitPowerType(frame.unit))] or ShadowUF.db.profile.powerColors.MANA
+	local color = ShadowUF.db.profile.powerColors[POWER_TYPES[UnitPowerType(frame.unit)]] or ShadowUF.db.profile.powerColors.MANA
 	
 	if( not ShadowUF.db.profile.units[frame.unitType].powerBar.invert ) then
 		frame.powerBar:SetStatusBarColor(color.r, color.g, color.b, ShadowUF.db.profile.bars.alpha)

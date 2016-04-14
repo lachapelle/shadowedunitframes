@@ -1,13 +1,30 @@
-local IncHeal = {playerHeals = {}}
-local frames, playerHeals = {}, IncHeal.playerHeals
+local HealComm = LibStub("LibHealComm-3.0")
+if( not HealComm ) then return end
+
+local IncHeal = {}
+local frames = {}
 local playerName = UnitName("player")
-local HealComm, resetFrame
+local playerIsCasting = false
+local playerTarget = ""
+local playerHeals = 0
 ShadowUF:RegisterModule(IncHeal, "incHeal", ShadowUF.L["Incoming heals"])
+ShadowUF.Tags.customEvents["HEALCOMM"] = IncHeal
+	
+-- How far ahead to show heals at most
+local INCOMING_SECONDS = 3
+
+local function unitFullName(unit)
+    local name, realm = UnitName(unit);
+    if (realm and realm ~= "") then
+        return name .. "-" .. realm;
+    else
+        return name;
+    end
+end
 
 function IncHeal:OnEnable(frame)
 	frames[frame] = true
 	frame.incHeal = frame.incHeal or ShadowUF.Units:CreateBar(frame)
-	frame.incHeal:SetFrameLevel(frame.topFrameLevel - 2)
 	
 	frame:RegisterUnitEvent("UNIT_MAXHEALTH", self, "UpdateFrame")
 	frame:RegisterUnitEvent("UNIT_HEALTH", self, "UpdateFrame")
@@ -19,25 +36,69 @@ end
 function IncHeal:OnDisable(frame)
 	frame:UnregisterAll(self)
 	frame.incHeal:Hide()
-	frames[frame] = nil
-
-	self:Setup()
+	
+	if( not frame.hasHCTag ) then
+		frames[frame] = nil
+		self:Setup()
+	end
 end
 
 function IncHeal:OnLayoutApplied(frame)
 	if( frame.visibility.incHeal and frame.visibility.healthBar ) then
-		frame.incHeal:SetWidth(frame.healthBar:GetWidth() * ShadowUF.db.profile.units[frame.unitType].incHeal.cap)
 		frame.incHeal:SetHeight(frame.healthBar:GetHeight())
 		frame.incHeal:SetStatusBarTexture(ShadowUF.Layout.mediaPath.statusbar)
 		frame.incHeal:SetStatusBarColor(ShadowUF.db.profile.healthColors.inc.r, ShadowUF.db.profile.healthColors.inc.g, ShadowUF.db.profile.healthColors.inc.b, ShadowUF.db.profile.bars.alpha)
-		frame.incHeal:SetPoint("TOPLEFT", frame.healthBar)
-		frame.incHeal:SetPoint("BOTTOMLEFT", frame.healthBar)
 		frame.incHeal:Hide()
+		
+		-- When we can cheat and put the incoming bar right behind the health bar, we can efficiently show the incoming heal bar
+		-- if the main bar has a transparency set, then we need a more complicated method to stop the health bar from being darker with incoming heals up
+		if( ( ShadowUF.db.profile.units[frame.unitType].healthBar.invert and ShadowUF.db.profile.bars.backgroundAlpha == 0 ) or ( not ShadowUF.db.profile.units[frame.unitType].healthBar.invert and ShadowUF.db.profile.bars.alpha == 1 ) ) then
+			frame.incHeal.simple = true
+			frame.incHeal:SetWidth(frame.healthBar:GetWidth() * ShadowUF.db.profile.units[frame.unitType].incHeal.cap)
+			frame.incHeal:SetFrameLevel(frame.topFrameLevel - 3)
+
+			frame.incHeal:ClearAllPoints()
+			frame.incHeal:SetPoint("TOPLEFT", frame.healthBar)
+			frame.incHeal:SetPoint("BOTTOMLEFT", frame.healthBar)
+		else
+			frame.incHeal.simple = nil
+			frame.incHeal:SetFrameLevel(frame.topFrameLevel)
+			frame.incHeal:SetWidth(1)
+			frame.incHeal:SetMinMaxValues(0, 1)
+			frame.incHeal:SetValue(1)
+
+			local x, y = select(4, frame.healthBar:GetPoint())
+			frame.incHeal:ClearAllPoints()
+			frame.incHeal.healthX = x
+			frame.incHeal.healthY = y
+			frame.incHeal.healthWidth = frame.healthBar:GetWidth()
+			frame.incHeal.maxWidth = frame.incHeal.healthWidth * ShadowUF.db.profile.units[frame.unitType].incHeal.cap
+			frame.incHeal.cappedWidth = frame.incHeal.healthWidth * (ShadowUF.db.profile.units[frame.unitType].incHeal.cap - 1)
+		end
+	end
+end
+
+-- Since I don't want a more complicated system where both incheal.lua and tags.lua are watching the same events
+-- I'll update the HC tags through here instead
+function IncHeal:EnableTag(frame)
+	frames[frame] = true
+	frame.hasHCTag = true
+	
+	self:Setup()
+end
+
+function IncHeal:DisableTag(frame)
+	frame.hasHCTag = nil
+	
+	if( not frame.visibility.incHeal ) then
+		frames[frame] = nil
+		self:Setup()
 	end
 end
 
 -- Check if we need to register callbacks
 function IncHeal:Setup()
+	
 	local enabled
 	for frame in pairs(frames) do
 		enabled = true
@@ -47,126 +108,104 @@ function IncHeal:Setup()
 	if( not enabled ) then
 		if( HealComm ) then
 			HealComm:UnregisterAllCallbacks(IncHeal)
-			resetFrame:UnregisterAllEvents()
 		end
 		return
 	end
 
-	HealComm = HealComm or LibStub("LibHealComm-3.0")
-	HealComm.RegisterCallback(self, "HealComm_DirectHealStart", "DirectHealStart")
-	HealComm.RegisterCallback(self, "HealComm_DirectHealStop", "DirectHealStop")
-	HealComm.RegisterCallback(self, "HealComm_DirectHealDelayed", "DirectHealDelayed")
-	HealComm.RegisterCallback(self, "HealComm_HealModifierUpdate", "HealModifierUpdate")
+	HealComm.RegisterCallback(self, "HealComm_DirectHealStart")
+	HealComm.RegisterCallback(self, "HealComm_DirectHealStop")
+	HealComm.RegisterCallback(self, "HealComm_DirectHealDelayed")
+	HealComm.RegisterCallback(self, "HealComm_HealModifierUpdate")
+end
 
-	-- When you leave a raid or party, all incoming heal data must be reset to stop it from locking and showing the incoming heal bar
-	if( not resetFrame ) then
-		resetFrame = CreateFrame("Frame")
-		resetFrame:SetScript("OnEvent", function(self, event)
-			if( ( event == "PARTY_MEMBERS_CHANGED" and GetNumPartyMembers() == 0 ) or ( event == "RAID_ROSTER_UPDATE" and GetNumRaidMembers() == 0 ) ) then
-				for k in pairs(playerHeals) do playerHeals[k] = nil end
-				for frame in pairs(frames) do
-					frame.incHeal:Hide()
+-- Update any tags using HC
+function IncHeal:UpdateTags(frame, amount)
+	if( not frame.fontStrings or not frame.hasHCTag ) then return end
+	
+	for _, fontString in pairs(frame.fontStrings) do
+		if( fontString.HEALCOMM ) then
+			fontString.incoming = amount > 0 and amount or nil
+			fontString:UpdateTags()
+		end
+	end
+end
+
+local function updateHealthBar(frame)
+	-- This makes sure that when a heal like Tranquility is cast, it won't show the entire cast but cap it at 4 seconds into the future
+	local time = GetTime()
+	local healed = select(2, HealComm:UnitIncomingHealGet(frame.unit, GetTime())) or 0
+    if playerIsCasting then
+		healed = healed + playerHeals
+    end
+	-- Update any tags that are using HC data
+	IncHeal:UpdateTags(frame, healed)
+	
+	-- Bar is also supposed to be enabled, lets update that too
+	if( frame.visibility.incHeal and frame.visibility.healthBar ) then
+		if( healed > 0 ) then
+			frame.incHeal.healed = healed
+			frame.incHeal:Show()
+			
+			-- When the primary bar has an alpha of 100%, we can cheat and do incoming heals easily. Otherwise we need to do it a more complex way to keep it looking good
+			if( frame.incHeal.simple ) then
+				frame.incHeal.total = UnitHealth(frame.unit) + healed
+				frame.incHeal:SetMinMaxValues(0, UnitHealthMax(frame.unit) * ShadowUF.db.profile.units[frame.unitType].incHeal.cap)
+				frame.incHeal:SetValue(frame.incHeal.total)
+			else
+				local health, maxHealth = UnitHealth(frame.unit), UnitHealthMax(frame.unit)
+				local healthWidth = frame.incHeal.healthWidth * (health / maxHealth)
+				local incWidth = frame.healthBar:GetWidth() * (healed / health)
+				if( (healthWidth + incWidth) > frame.incHeal.maxWidth ) then
+					incWidth = frame.incHeal.cappedWidth
 				end
+				
+				frame.incHeal:SetWidth(incWidth)
+				frame.incHeal:SetPoint("TOPLEFT", SUFUnitplayer, "TOPLEFT", frame.incHeal.healthX + healthWidth, frame.incHeal.healthY)
 			end
-		end)
-	end
-
-	resetFrame:RegisterEvent("RAID_ROSTER_UPDATE")
-	resetFrame:RegisterEvent("PARTY_MEMBERS_CHANGED")
-end
-
-local function getName(unit)
-	local name, server = UnitName(unit)
-	if( server and server ~= "" ) then
-		name = string.format("%s-%s", name, server)
-	end
-	
-	return name
-end
-
-local function updateHealthBar(frame, target, succeeded)
-	-- Add in the players own heals
-	local healed = playerHeals[target] or 0
-	
-	-- Add in any heals from other people
-	local incoming = select(2, HealComm:UnitIncomingHealGet(target, 0))
-	if( incoming ) then
-		healed = healed + incoming
-	end
-	
-	-- Apply any healing debuffs
-	healed = math.floor(healed * HealComm:UnitHealModifierGet(target))
-	
-	if( healed > 0 ) then
-		frame.incHeal.total = UnitHealth(frame.unit) + healed
-		frame.incHeal:SetMinMaxValues(0, UnitHealthMax(frame.unit) * ShadowUF.db.profile.units[frame.unitType].incHeal.cap)
-		frame.incHeal:SetValue(frame.incHeal.total)
-		frame.incHeal.nextUpdate = nil
-		frame.incHeal.hasHeal = true
-		frame.incHeal:Show()
-		
-	elseif( frame.incHeal.hasHeal ) then
-		if( succeeded ) then
-			frame.incHeal.nextUpdate = true
 		else
+			frame.incHeal.total = nil
+			frame.incHeal.healed = nil
 			frame.incHeal:Hide()
 		end
-		
-		frame.incHeal.hasHeal = nil
-
-		-- If it's an overheal, we won't have anything to do on a next update anyway
-		local maxHealth = UnitHealthMax(frame.unit)
-		if( maxHealth <= frame.incHeal.total ) then
-			frame.incHeal:SetValue(maxHealth)
-		end
 	end
 end
 
-function IncHeal:UpdateFrame(frame, event)
-	local name = getName(frame.unit)
-	if( name ) then
-		updateHealthBar(frame, name, event)
-	end
+function IncHeal:UpdateFrame(frame)
+	updateHealthBar(frame, false)
 end
 
-function IncHeal:UpdateIncoming(healer, amount, succeeded, ...)
-	for i=1, select("#", ...) do
-		local target = select(i, ...)
-		if( healer == playerName ) then
-			if( amount ) then
-				playerHeals[target] = (playerHeals[target] or 0) + amount
-			else
-				playerHeals[target] = nil
-			end
-		end
-		
-		self:UpdateHealing(target, succeeded)
-	end
-end
-
-function IncHeal:UpdateHealing(target, succeeded)
+function IncHeal:UpdateIncoming(interrupted, ...)
 	for frame in pairs(frames) do
-		if( frame:IsVisible() and frame.unit and getName(frame.unit) == target ) then
-			updateHealthBar(frame, target, succeeded)
+		for i=1, select("#", ...) do
+			if( select(i, ...) == unitFullName(frame.unit) ) then
+				updateHealthBar(frame)
+			end
 		end
 	end
 end
 
 -- Handle callbacks from HealComm
-function IncHeal:DirectHealStart(event, healerName, amount, endTime, ...)
-	self:UpdateIncoming(healerName, amount, nil, ...)
+
+function IncHeal:HealComm_DirectHealStart(event, healerName, healSize, endTime, ...)
+	if healerName == playerName then
+		playerIsCasting = true
+		playerTarget = ...
+		playerHeals = healSize
+	end
+	self:UpdateIncoming(playerIsCasting and playerName, ...)
 end
 
-function IncHeal:DirectHealStop(event, healerName, amount, succeeded, ...)
-	self:UpdateIncoming(healerName, nil, succeeded, ...)
+function IncHeal:HealComm_DirectHealDelayed(event, healerName, healSize, endTime, ...)
+	self:UpdateIncoming(...)
 end
 
-function IncHeal:DirectHealDelayed(event, healerName, amount, endTime, ...)
-	self:UpdateIncoming(healerName, 0, ...)
+function IncHeal:HealComm_DirectHealStop(event, healerName, healSize, succeeded, ...)
+    if healerName == playerName then
+        playerIsCasting = false
+    end
+	self:UpdateIncoming(healerName, ...)
 end
 
-function IncHeal:HealModifierUpdate(event, unit, targetName, healMod)
-	self:UpdateHealing(targetName)
+function IncHeal:HealComm_HealModifierUpdate(event, unit, targetName, newModifier)
+	self:UpdateIncoming(unit)
 end
-
-

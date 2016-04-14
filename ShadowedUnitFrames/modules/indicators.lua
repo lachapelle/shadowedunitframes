@@ -1,4 +1,4 @@
-local Indicators = {list = {"status", "pvp", "leader", "masterLoot", "raidTarget", "happiness", "ready", "role", "lfdRole", "class"}}
+local Indicators = {list = {"status", "pvp", "leader", "masterLoot", "raidTarget", "happiness", "ready", "role", "class"}}
 local leavingWorld
 
 ShadowUF:RegisterModule(Indicators, "indicators", ShadowUF.L["Indicators"])
@@ -63,24 +63,6 @@ function Indicators:UpdateRaidTarget(frame)
 	end
 end
 
-function Indicators:UpdateLFDRole(frame, event)
-	if( not frame.indicators.lfdRole or not frame.indicators.lfdRole.enabled ) then return end
-	
-	local isTank, isHealer, isDamage = nil
-	if( isTank ) then
-		frame.indicators.lfdRole:SetTexCoord(0, 19/64, 22/64, 41/64)
-		frame.indicators.lfdRole:Show()
-	elseif( isHealer ) then
-		frame.indicators.lfdRole:SetTexCoord(20/64, 39/64, 1/64, 20/64)
-		frame.indicators.lfdRole:Show()
-	elseif( isDamage ) then
-		frame.indicators.lfdRole:SetTexCoord(20/64, 39/64, 22/64, 41/64)
-		frame.indicators.lfdRole:Show()
-	else
-		frame.indicators.lfdRole:Hide()
-	end	
-end
-
 function Indicators:UpdateRole(frame, event)
 	if( not frame.indicators.role or not frame.indicators.role.enabled ) then return end
 	
@@ -100,7 +82,6 @@ end
 function Indicators:UpdateLeader(frame)
 	self:UpdateMasterLoot(frame)
 	self:UpdateRole(frame)
-	self:UpdateLFDRole(frame)
 	if( not frame.indicators.leader or not frame.indicators.leader.enabled ) then return end
 
 	if( UnitIsPartyLeader(frame.unit) ) then
@@ -135,12 +116,6 @@ local function combatMonitor(self, elapsed)
 	else
 		self.status:Hide()
 	end
-end
-
--- It looks like the combat check for players is a bit buggy when they are in a vehicle, so swap it to also check polling
-function Indicators:CheckVehicle(frame)
-	frame.indicators.timeElapsed = 0
-	frame.indicators:SetScript("OnUpdate", frame.inVehicle and combatMonitor or nil)
 end
 
 function Indicators:UpdateStatus(frame)
@@ -251,7 +226,6 @@ function Indicators:OnEnable(frame)
 		frame.indicators.parent = frame
 
 		if( frame.unitType == "player" ) then
-			frame:RegisterUpdateFunc(self, "CheckVehicle")
 			frame:RegisterNormalEvent("PLAYER_REGEN_ENABLED", self, "UpdateStatus")
 			frame:RegisterNormalEvent("PLAYER_REGEN_DISABLED", self, "UpdateStatus")
 			frame:RegisterNormalEvent("PLAYER_UPDATE_RESTING", self, "UpdateStatus")
@@ -344,15 +318,6 @@ function Indicators:OnEnable(frame)
 		
 		frame.indicators.happiness = frame.indicators.happiness or frame.indicators:CreateTexture(nil, "OVERLAY")
 		frame.indicators.happiness:SetTexture("Interface\\PetPaperDollFrame\\UI-PetHappiness")
-	end
-	
-	if( config.indicators.lfdRole and config.indicators.lfdRole.enabled ) then
-		if( frame.unit == "player" ) then
-			frame:RegisterNormalEvent("PLAYER_ROLES_ASSIGNED", self, "UpdateLFDRole")
-		end
-		
-		frame.indicators.lfdRole = frame.indicators.lfdRole or frame.indicators:CreateTexture(nil, "OVERLAY")
-		frame.indicators.lfdRole:SetTexture("Interface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES")
 	end
 
 	-- As they all share the function, register it as long as one is active

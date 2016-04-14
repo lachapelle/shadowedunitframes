@@ -120,7 +120,7 @@ local function positionAllButtons(group, config)
 		end
 		
 		if( not columnsHaveScale[columnID] and button.isSelfScaled ) then
-			local size = math.ceil(button:GetSize() * button:GetScale())
+			local size = math.ceil(button:GetWidth() * button:GetScale())
 			columnsHaveScale[columnID] = columnsHaveScale[columnID] and math.max(size, columnsHaveScale[columnID]) or size
 		end
 	end
@@ -213,8 +213,8 @@ local function cancelBuff(self)
 	
 	if( self.filter == "TEMP" ) then
 		CancelItemTempEnchantment(self.auraID - 15)
-	else
-		CancelUnitBuff(self.unit, self.auraID, self.filter)
+	elseif UnitIsUnit(self.unit,"player") then
+		CancelPlayerBuff(UnitBuff("player",self.auraID))
 	end
 end
 
@@ -489,19 +489,13 @@ local function scan(parent, frame, type, config, filter)
 
 	local isFriendly = UnitIsFriend(frame.parent.unit, "player")
 	local index = 0
-	local name, rank, texture, count, auraType, duration, endTime, isStealable
+	local name, rank, texture, count, auraType, duration, endTime
 	while( true ) do
 		index = index + 1 
-		if filter == "HELPFUL" then
-			name, rank, texture, count, auraType, duration, endTime = UnitBuff(frame.parent.unit, index)
+		if filter == "HARMFUL" or filter == "HARMFUL|RAID" then
+			name, rank, texture, count, auraType, duration, endTime = UnitDebuff(frame.parent.unit, index, filter == "HARMFUL|RAID")
 		else
-			name, rank, texture, count, auraType, duration, endTime = UnitDebuff(frame.parent.unit, index)
-		end
-		if not endTime then
-			endTime = 0
-		end
-		if not duration then
-			duration = 0
+			name, rank, texture, count, duration, endTime = UnitBuff(frame.parent.unit, index, filter)
 		end
 		if( not name ) then break end
 		
@@ -514,9 +508,7 @@ local function scan(parent, frame, type, config, filter)
 				
 			-- Show debuff border, or a special colored border if it's stealable
 			local button = frame.buttons[frame.totalAuras]
-			if( isStealable and not isFriendly and not ShadowUF.db.profile.auras.disableColor ) then
-				button.border:SetVertexColor(stealableColor.r, stealableColor.g, stealableColor.b)
-			elseif( ( not isFriendly or type == "debuffs" ) and not ShadowUF.db.profile.auras.disableColor ) then
+			if( ( not isFriendly or type == "debuffs" ) and not ShadowUF.db.profile.auras.disableColor ) then
 				local color = auraType and DebuffTypeColor[auraType] or DebuffTypeColor.none
 				button.border:SetVertexColor(color.r, color.g, color.b)
 			else
@@ -524,8 +516,8 @@ local function scan(parent, frame, type, config, filter)
 			end
 			
 			-- Show the cooldown ring
-			if( not ShadowUF.db.profile.auras.disableCooldown and duration > 0 and endTime > 0 and ( not config.selfTimers or ( config.selfTimers ) ) ) then
-				button.cooldown:SetCooldown(endTime - duration, duration)
+			if( not ShadowUF.db.profile.auras.disableCooldown and duration and duration > 0 and config.selfTimers ) then
+				button.cooldown:SetCooldown(GetTime() + endTime - duration, duration)
 				button.cooldown:Show()
 			else
 				button.cooldown:Hide()

@@ -1,4 +1,5 @@
 local Health = {}
+local banzai = LibStub("LibBanzai-2.0")
 ShadowUF:RegisterModule(Health, "healthBar", ShadowUF.L["Health bar"], true)
 
 local function getGradientColor(unit)
@@ -49,6 +50,14 @@ local function updateTimer(self)
 	end
 end
 
+local function callback(aggro, name, ...)
+	for _,frame in pairs(ShadowUF.Units.unitFrames) do
+		if UnitName(frame.unit) and UnitIsPlayer(frame.unit) then
+			Health:UpdateColor(frame)
+		end
+	end
+end
+
 function Health:OnEnable(frame)
 	if( not frame.healthBar ) then
 		frame.healthBar = ShadowUF.Units:CreateBar(frame)
@@ -57,7 +66,6 @@ function Health:OnEnable(frame)
 	frame:RegisterUnitEvent("UNIT_HEALTH", self, "Update")
 	frame:RegisterUnitEvent("UNIT_MAXHEALTH", self, "Update")
 	frame:RegisterUnitEvent("UNIT_FACTION", self, "UpdateColor")
-	frame:RegisterUnitEvent("UNIT_THREAT_SITUATION_UPDATE", self, "UpdateColor")	
 	
 	if( frame.unit == "pet" ) then
 		frame:RegisterUnitEvent("UNIT_HAPPINESS", self, "UpdateColor")
@@ -65,6 +73,7 @@ function Health:OnEnable(frame)
 	
 	frame:RegisterUpdateFunc(self, "UpdateColor")
 	frame:RegisterUpdateFunc(self, "Update")
+	banzai:RegisterCallback(callback)
 end
 
 function Health:OnLayoutApplied(frame)
@@ -80,6 +89,7 @@ end
 
 function Health:OnDisable(frame)
 	frame:UnregisterAll(self)
+	banzai:UnregisterCallback(callback)
 end
 
 function Health:SetBarColor(bar, invert, r, g, b)
@@ -110,7 +120,7 @@ function Health:UpdateColor(frame)
 		frame.healthBar.wasOffline = true
 		self:SetBarColor(frame.healthBar, ShadowUF.db.profile.units[frame.unitType].healthBar.invert, ShadowUF.db.profile.healthColors.offline.r, ShadowUF.db.profile.healthColors.offline.g, ShadowUF.db.profile.healthColors.offline.b)
 		return
-	elseif( ShadowUF.db.profile.units[frame.unitType].healthBar.colorAggro and UnitThreatSituation(frame.unit) == 3 ) then
+	elseif( ShadowUF.db.profile.units[frame.unitType].healthBar.colorAggro and banzai:GetUnitAggroByUnitId(frame.unit) ) then
 		self:SetBarColor(frame.healthBar, ShadowUF.db.profile.units[frame.unitType].healthBar.invert, ShadowUF.db.profile.healthColors.hostile.r, ShadowUF.db.profile.healthColors.hostile.g, ShadowUF.db.profile.healthColors.hostile.b)
 		return
 	elseif( frame.inVehicle ) then

@@ -1,8 +1,7 @@
 local Units = {headerFrames = {}, unitFrames = {}, frameList = {}, unitEvents = {}}
-Units.childUnits = {["partytarget"] = "party", ["partypet"] = "party", ["maintanktarget"] = "maintank", ["mainassisttarget"] = "mainassist", ["arenatarget"] = "arena", ["arenapet"] = "arena"}
-Units.zoneUnits = {["arena"] = "arena"}
+Units.childUnits = {["partytarget"] = "party", ["partypet"] = "party", ["maintanktarget"] = "maintank", ["mainassisttarget"] = "mainassist"}
+Units.zoneUnits = {}
 
---local stateMonitor = CreateFrame("Frame", nil, nil, "SecureHandlerBaseTemplate")
 local playerClass = select(2, UnitClass("player"))
 local unitFrames, headerFrames, frameList, unitEvents, childUnits, queuedCombat = Units.unitFrames, Units.headerFrames, Units.frameList, Units.unitEvents, Units.childUnits, {}
 local _G = getfenv(0)
@@ -430,8 +429,12 @@ OnAttributeChanged = function(self, name, unit)
 	ClickCastFrames = ClickCastFrames or {}
 	ClickCastFrames[self] = true
 	
+	-- Pet changed, going from pet -> vehicle for one
+	if( self.unit == "pet" or self.unitType == "partypet" ) then
+		self.unitRealOwner = self.unit == "pet" and "player" or ShadowUF.partyUnits[self.unitID]
+		self:RegisterNormalEvent("UNIT_PET", Units, "CheckPetUnitUpdated")
 	-- Automatically do a full update on target change
-	if( self.unit == "target" ) then
+	elseif( self.unit == "target" ) then
 		self.isUnitVolatile = true
 		self:RegisterNormalEvent("PLAYER_TARGET_CHANGED", Units, "CheckUnitStatus")
 
@@ -502,7 +505,7 @@ end
 
 -- Show tooltip
 local function OnEnter(self)
-	if( not ShadowUF.db.profile.tooltipCombat or not InCombatLockdown() ) then
+	if( not ShadowUF.db.profile.tooltipCombat or not UnitAffectingCombat("player") ) then
 		UnitFrame_OnEnter(self)
 	end
 end
@@ -711,11 +714,6 @@ function Units:SetHeaderAttributes(frame, type)
 			frame:SetAttribute("groupBy", "GROUP")
 		end
 	
-	-- Need to position the fake units
-	elseif( type == "boss" or type == "arena" ) then
-		frame:SetWidth(config.width)
-		self:PositionHeaderChildren(frame)
-	
 	-- Update party frames to not show anyone if they should be in raids
 	elseif( type == "party" ) then
 		frame:SetAttribute("maxColumns", math.ceil((config.showPlayer and 5 or 4) / config.unitsPerColumn))
@@ -729,8 +727,8 @@ function Units:SetHeaderAttributes(frame, type)
 		self:CheckGroupVisibility()
 		
 		-- Need to update our flags on the state monitor so it knows what to do
---		stateMonitor:SetAttribute("hideSemiRaid", ShadowUF.db.profile.units.party.hideSemiRaid)
---		stateMonitor:SetAttribute("hideAnyRaid", ShadowUF.db.profile.units.party.hideAnyRaid)
+		SUFHeaderparty:SetAttribute("hideSemiRaid", ShadowUF.db.profile.units.party.hideSemiRaid)
+		SUFHeaderparty:SetAttribute("hideAnyRaid", ShadowUF.db.profile.units.party.hideAnyRaid)
 	end
 end
 
@@ -744,7 +742,7 @@ function Units:LoadUnit(unit)
 	
 	local frame = self:CreateUnit("Button", "SUFUnit" .. unit, UIParent, "SecureUnitButtonTemplate")
 	frame:SetAttribute("unit", unit)
-	frame.hasStateWatch = unit == "pet"
+	--frame.hasStateWatch = unit == "pet"
 		
 	-- Annd lets get this going
 	RegisterUnitWatch(frame, frame.hasStateWatch)
@@ -807,7 +805,7 @@ function Units:LoadGroupHeader(type)
 		headerFrames[type]:Show()
 		
 		if( type == "party" ) then
---			stateMonitor:SetAttribute("partyDisabled", nil)
+			SUFHeaderparty:SetAttribute("partyDisabled", nil)
 		end
 		
 		if( type == "party" or type == "raid" ) then
@@ -834,7 +832,19 @@ function Units:LoadGroupHeader(type)
 	-- technically this isn't the cleanest solution because party frames will still have unit watches active
 	-- but this isn't as big of a deal, because SUF automatically will unregister the OnEvent for party frames while hidden
 	if( type == "party" ) then
---		RegisterStateDriver(stateMonitor, "raidmonitor", "[target=raid6, exists] raid6; [target=raid1, exists] raid1; none")
+		headerFrame:SetScript("OnAttributeChanged", function (self, name, unit)
+			if( name ~= "state-raidmonitor" and name ~= "partydisabled" and name ~= "hideanyraid" and name ~= "hidesemiraid" ) then return end
+			if( self:GetAttribute("partyDisabled") ) then return end
+			
+			if( self:GetAttribute("hideAnyRaid") and ( self:GetAttribute("state-raidmonitor") == "raid1" or self:GetAttribute("state-raidmonitor") == "raid6" ) ) then
+				self:Hide()
+			elseif( self:GetAttribute("hideSemiRaid") and self:GetAttribute("state-raidmonitor") == "raid6" ) then
+				self:Hide()
+			else
+				self:Show()
+			end
+		end)
+		RegisterStateDriver(headerFrame, "raidmonitor", "[target=raid6, exists] raid6; [target=raid1, exists] raid1; none")
 	else
 		headerFrame:Show()
 	end
@@ -855,14 +865,6 @@ function Units:LoadZoneHeader(type)
 	headerFrame:SetHeight(0.1)
 	headerFrame.children = {}
 	headerFrames[type] = headerFrame
-	
-	if( type == "arena" ) then
-		headerFrame:SetScript("OnAttributeChanged", function(self, key, value)
-			if( key == "childChanged" and value and self.children[value] and self:IsVisible() ) then
-				self.children[value]:FullUpdate()
-			end
-		end)
-	end
 	
 	for id, unit in pairs(ShadowUF[type .. "Units"]) do
 		local frame = self:CreateUnit("Button", "SUFHeader" .. type .. "UnitButton" .. id, headerFrame, "SecureUnitButtonTemplate")
@@ -885,7 +887,7 @@ end
 
 -- Load a unit that is a child of another unit (party pet/party target)
 function Units:LoadChildUnit(parent, type, id)
-	if( InCombatLockdown() ) then
+	if( UnitAffectingCombat("player") ) then
 		if( not queuedCombat[parent:GetName() .. type] ) then
 			queuedCombat[parent:GetName() .. type] = {parent = parent, type = type, id = id}
 		end
@@ -942,7 +944,7 @@ end
 function Units:UninitializeFrame(type)
 	-- Disables showing party in raid automatically if raid frames are disabled
 	if( type == "party" ) then
---		stateMonitor:SetAttribute("partyDisabled", true)
+		SUFHeaderparty:SetAttribute("partyDisabled", true)
 	end
 	if( type == "party" or type == "raid" ) then
 		self:CheckGroupVisibility()
@@ -1025,7 +1027,7 @@ end
 -- Deal with zone changes for enabling modules
 local instanceType, queueZoneCheck
 function Units:CheckPlayerZone(force)
-	if( InCombatLockdown() ) then
+	if( UnitAffectingCombat("player") ) then
 		queueZoneCheck = force and 2 or 1
 		return
 	end
@@ -1078,7 +1080,7 @@ centralFrame:SetScript("OnEvent", function(self, event, unit)
 			Units:LoadChildUnit(queue.parent, queue.type, queue.id)
 		end
 		
-		table.wipe(queuedCombat)
+		queuedCombat = {}
 		
 		if( queueZoneCheck ) then
 			Units:CheckPlayerZone(queueZoneCheck == 2 and true)

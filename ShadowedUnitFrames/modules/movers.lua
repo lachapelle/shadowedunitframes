@@ -40,7 +40,7 @@ local function createConfigEnv()
 		UnitIsDeadOrGhost = function(unit) return false end,
 		UnitIsConnected = function(unit) return true end,
 		UnitLevel = function(unit) return MAX_PLAYER_LEVEL end,
-		UnitIsPlayer = function(unit) return unit ~= "boss" and unit ~= "pet" and not string.match(unit, "(%w+)pet") end,
+		UnitIsPlayer = function(unit) return unit ~= "pet" and not string.match(unit, "(%w+)pet") end,
 		UnitHealth = function(unit) return getValue("UnitHealth", unit, math.random(20000, 50000)) end,
 		UnitHealthMax = function(unit) return 50000 end,
 		UnitPower = function(unit) return getValue("UnitPower", unit, math.random(20000, 50000)) end,
@@ -52,9 +52,6 @@ local function createConfigEnv()
 		UnitIsAFK = function(unit) return false end,
 		UnitFactionGroup = function(unit) return _G.UnitFactionGroup("player") end,
 		UnitAffectingCombat = function() return true end,
-		UnitThreatSituation = function() return 0 end,
-		UnitDetailedThreatSituation = function() return nil end,
-		UnitThreatSituation = function() return 0 end,
 		UnitCastingInfo = function(unit)
 			-- 1 -> 10: spell, rank, displayName, icon, startTime, endTime, isTradeSkill, castID, notInterruptible
 			local data = unitConfig["UnitCastingInfo" .. unit] or {}
@@ -82,23 +79,25 @@ local function createConfigEnv()
 			local assignment = getValue("GetPartyAssignment", unit, math.random(1, 2) == 1 and "MAINTANK" or "MAINASSIST")
 			return assignment == type
 		end,
-		UnitGroupRolesAssigned = function(unit)
-			local role = getValue("UnitGroupRolesAssigned", unit, math.random(1, 3))
-			return role == 1, role == 2, role == 3
-		end,
 		UnitPowerType = function(unit)
 			local powerType = math.random(0, 4)
 			powerType = getValue("UnitPowerType", unit, powerType == 4 and 6 or powerType)
 			
 			return powerType, powerType == 0 and "MANA" or powerType == 1 and "RAGE" or powerType == 2 and "FOCUS" or powerType == 3 and "ENERGY" or powerType == 6 and "RUNIC_POWER"
 		end,
-		UnitAura = function(unit, id, filter)
+		UnitBuff = function(unit, id, filter)
 			if( type(id) ~= "number" or id > 40 ) then return end
 			
-			local texture = filter == "HELPFUL" and "Interface\\Icons\\Spell_Nature_Rejuvenation" or "Interface\\Icons\\Ability_DualWield"
+			local texture = "Interface\\Icons\\Spell_Nature_Rejuvenation"
+			return L["Test Aura"], L["Rank 1"], texture, id
+		end,
+		UnitDebuff = function(unit, id, filter)
+			if( type(id) ~= "number" or id > 40 ) then return end
+			
+			local texture = "Interface\\Icons\\Ability_DualWield"
 			local mod = id % 5
 			local auraType = mod == 0 and "Magic" or mod == 1 and "Curse" or mod == 2 and "Poison" or mod == 3 and "Disease" or "none"
-			return L["Test Aura"], L["Rank 1"], texture, id, auraType, 0, 0, "player", id % 6 == 0
+			return L["Test Aura"], L["Rank 1"], texture, id, auraType
 		end,
 		UnitName = function(unit)
 			local unitID = string.match(unit, "(%d+)")
@@ -431,7 +430,7 @@ function Movers:CreateInfoFrame()
 	frame:SetMovable(true)
 	frame:RegisterEvent("PLAYER_REGEN_DISABLED")
 	frame:SetScript("OnEvent", function(self)
-		if( not ShadowUF.db.profile.locked and self:IsVisible() ) then
+		if( not ShadowUF.db.profile.locked and this:IsVisible() ) then
 			ShadowUF.db.profile.locked = true
 			Movers:Disable()
 			

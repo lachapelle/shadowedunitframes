@@ -9,20 +9,18 @@ ShadowUF.playerUnit = "player"
 ShadowUF.enabledUnits = {}
 ShadowUF.modules = {}
 ShadowUF.moduleOrder = {}
-ShadowUF.unitList = {"player", "pet", "pettarget", "target", "targettarget", "targettargettarget", "focus", "focustarget", "party", "partypet", "partytarget", "raid", "raidpet", "boss", "bosstarget", "maintank", "maintanktarget", "mainassist", "mainassisttarget", "arena", "arenatarget", "arenapet"}
-ShadowUF.fakeUnits = {["targettarget"] = true, ["targettargettarget"] = true, ["pettarget"] = true, ["arenatarget"] = true, ["focustarget"] = true, ["focustargettarget"] = true, ["partytarget"] = true, ["raidtarget"] = true, ["bosstarget"] = true, ["maintanktarget"] = true, ["mainassisttarget"] = true}
-L.units = {["raidpet"] = L["Raid pet"], ["PET"] = L["Pet"], ["VEHICLE"] = L["Vehicle"], ["arena"] = L["Arena"], ["arenapet"] = L["Arena Pet"], ["arenatarget"] = L["Arena Target"], ["boss"] = L["Boss"], ["bosstarget"] = L["Boss Target"], ["focus"] = L["Focus"], ["focustarget"] = L["Focus Target"], ["mainassist"] = L["Main Assist"], ["mainassisttarget"] = L["Main Assist Target"], ["maintank"] = L["Main Tank"], ["maintanktarget"] = L["Main Tank Target"], ["party"] = L["Party"], ["partypet"] = L["Party Pet"], ["partytarget"] = L["Party Target"], ["pet"] = L["Pet"], ["pettarget"] = L["Pet Target"], ["player"] = L["Player"],["raid"] = L["Raid"], ["target"] = L["Target"], ["targettarget"] = L["Target of Target"], ["targettargettarget"] = L["Target of Target of Target"]}
+ShadowUF.unitList = {"player", "pet", "pettarget", "target", "targettarget", "targettargettarget", "focus", "focustarget", "party", "partypet", "partytarget", "raid", "raidpet", "maintank", "maintanktarget", "mainassist", "mainassisttarget"}
+ShadowUF.fakeUnits = {["targettarget"] = true, ["targettargettarget"] = true, ["pettarget"] = true, ["focustarget"] = true, ["focustargettarget"] = true, ["partytarget"] = true, ["raidtarget"] = true, ["maintanktarget"] = true, ["mainassisttarget"] = true}
+L.units = {["raidpet"] = L["Raid pet"], ["PET"] = L["Pet"], ["focus"] = L["Focus"], ["focustarget"] = L["Focus Target"], ["mainassist"] = L["Main Assist"], ["mainassisttarget"] = L["Main Assist Target"], ["maintank"] = L["Main Tank"], ["maintanktarget"] = L["Main Tank Target"], ["party"] = L["Party"], ["partypet"] = L["Party Pet"], ["partytarget"] = L["Party Target"], ["pet"] = L["Pet"], ["pettarget"] = L["Pet Target"], ["player"] = L["Player"],["raid"] = L["Raid"], ["target"] = L["Target"], ["targettarget"] = L["Target of Target"], ["targettargettarget"] = L["Target of Target of Target"]}
 
 
 -- Cache the units so we don't have to concat every time it updates
 ShadowUF.unitTarget = setmetatable({}, {__index = function(tbl, unit) rawset(tbl, unit, unit .. "target"); return unit .. "target" end})
-ShadowUF.partyUnits, ShadowUF.raidUnits, ShadowUF.raidPetUnits, ShadowUF.bossUnits, ShadowUF.arenaUnits = {}, {}, {}, {}, {}
+ShadowUF.partyUnits, ShadowUF.raidUnits, ShadowUF.raidPetUnits = {}, {}, {}
 ShadowUF.maintankUnits, ShadowUF.mainassistUnits, ShadowUF.raidpetUnits = ShadowUF.raidUnits, ShadowUF.raidUnits, ShadowUF.raidPetUnits
 for i=1, MAX_PARTY_MEMBERS do ShadowUF.partyUnits[i] = "party" .. i end
 for i=1, MAX_RAID_MEMBERS do ShadowUF.raidUnits[i] = "raid" .. i end
 for i=1, MAX_RAID_MEMBERS do ShadowUF.raidPetUnits[i] = "raidpet" .. i end
---for i=1, MAX_BOSS_FRAMES do ShadowUF.bossUnits[i] = "boss" .. i end
-for i=1, 5 do ShadowUF.arenaUnits[i] = "arena" .. i end
 
 function ShadowUF:OnInitialize()
 	self.defaults = {
@@ -36,8 +34,8 @@ function ShadowUF:OnInitialize()
 			positions = {},
 			range = {},
 			filters = {zonewhite = {}, zoneblack = {}, whitelists = {}, blacklists = {}},
-			visibility = {arena = {}, pvp = {}, party = {}, raid = {}},
-			hidden = {cast = false, runes = true, buffs = true, party = true, player = true, pet = true, target = true, focus = true, boss = true, arena = true},
+			visibility = {pvp = {}, party = {}, raid = {}, arena = {}},
+			hidden = {cast = false, buffs = true, party = true, player = true, pet = true, target = true, focus = true},
 		},
 	}
 	
@@ -207,10 +205,6 @@ function ShadowUF:LoadUnitDefaults()
 		
 		if( not self.fakeUnits[unit] ) then
 			self.defaults.profile.units[unit].combatText = {enabled = true, anchorTo = "$parent", anchorPoint = "C", x = 0, y = 0}
-
-			if( unit ~= "arena" and unit ~= "arenapet" ) then
-				self.defaults.profile.units[unit].incHeal = {enabled = false, cap = 1.30}
-			end
 		end
 		
 		if( unit ~= "player" ) then
@@ -240,28 +234,28 @@ function ShadowUF:LoadUnitDefaults()
 	self.defaults.profile.units.player.healthBar.predicted = true
 	self.defaults.profile.units.player.powerBar.predicted = true
 	self.defaults.profile.units.player.indicators.status.enabled = true
-	self.defaults.profile.units.player.runeBar = {enabled = false}
 	self.defaults.profile.units.player.totemBar = {enabled = false}
 	self.defaults.profile.units.player.druidBar = {enabled = false}
 	self.defaults.profile.units.player.xpBar = {enabled = false}
 	self.defaults.profile.units.player.fader = {enabled = false, combatAlpha = 1.0, inactiveAlpha = 0.60}
-	self.defaults.profile.units.player.indicators.lfdRole = {enabled = true, size = 0, x = 0, y = 0}
+	self.defaults.profile.units.player.incHeal = {enabled = false, cap = 1}
 	-- PET
 	self.defaults.profile.units.pet.enabled = true
 	self.defaults.profile.units.pet.indicators.happiness = {enabled = true, size = 16, anchorPoint = "BR", anchorTo = "$parent", x = 2, y = -2}
 	self.defaults.profile.units.pet.fader = {enabled = false, combatAlpha = 1.0, inactiveAlpha = 0.60}
 	self.defaults.profile.units.pet.xpBar = {enabled = false}
+	self.defaults.profile.units.pet.incHeal = {enabled = false, cap = 1}
 	-- FOCUS
 	self.defaults.profile.units.focus.enabled = true
 	self.defaults.profile.units.focus.fader = {enabled = false, combatAlpha = 1.0, inactiveAlpha = 0.60}
-	self.defaults.profile.units.focus.indicators.lfdRole = {enabled = false, size = 0, x = 0, y = 0}
+	self.defaults.profile.units.focus.incHeal = {enabled = false, cap = 1}
 	-- FOCUSTARGET
 	self.defaults.profile.units.focustarget.enabled = true
 	self.defaults.profile.units.focustarget.fader = {enabled = false, combatAlpha = 1.0, inactiveAlpha = 0.60}
 	-- TARGET
 	self.defaults.profile.units.target.enabled = true
 	self.defaults.profile.units.target.comboPoints = {enabled = true, isBar = false, height = 0.40, order = 30, anchorTo = "$parent", anchorPoint = "BR", x = 0, y = 0}
-	self.defaults.profile.units.target.indicators.lfdRole = {enabled = false, size = 0, x = 0, y = 0}
+	self.defaults.profile.units.target.incHeal = {enabled = false, cap = 1}
 	-- TARGETTARGET/TARGETTARGETTARGET
 	self.defaults.profile.units.targettarget.enabled = true
 	self.defaults.profile.units.targettargettarget.enabled = true
@@ -271,21 +265,7 @@ function ShadowUF:LoadUnitDefaults()
 	self.defaults.profile.units.party.auras.buffs.maxRows = 1
 	self.defaults.profile.units.party.fader = {enabled = false, combatAlpha = 1.0, inactiveAlpha = 0.60}
 	self.defaults.profile.units.party.combatText.enabled = false
-	self.defaults.profile.units.party.indicators.lfdRole = {enabled = true, size = 0, x = 0, y = 0}
-	-- ARENA
-	self.defaults.profile.units.arena.enabled = false
-	self.defaults.profile.units.arena.attribPoint = "TOP"
-	self.defaults.profile.units.arena.attribAnchorPoint = "LEFT"
-	self.defaults.profile.units.arena.auras.debuffs.maxRows = 1
-	self.defaults.profile.units.arena.auras.buffs.maxRows = 1
-	self.defaults.profile.units.arena.offset = 0
-	-- BOSS
-	self.defaults.profile.units.boss.enabled = false
-	self.defaults.profile.units.boss.attribPoint = "TOP"
-	self.defaults.profile.units.boss.attribAnchorPoint = "LEFT"
-	self.defaults.profile.units.boss.auras.debuffs.maxRows = 1
-	self.defaults.profile.units.boss.auras.buffs.maxRows = 1
-	self.defaults.profile.units.boss.offset = 0
+	self.defaults.profile.units.party.incHeal = {enabled = false, cap = 1}
 	-- RAID
 	self.defaults.profile.units.raid.groupBy = "GROUP"
 	self.defaults.profile.units.raid.sortOrder = "ASC"
@@ -296,6 +276,7 @@ function ShadowUF:LoadUnitDefaults()
 	self.defaults.profile.units.raid.filters = {[1] = true, [2] = true, [3] = true, [4] = true, [5] = true, [6] = true, [7] = true, [8] = true}
 	self.defaults.profile.units.raid.fader = {enabled = false, combatAlpha = 1.0, inactiveAlpha = 0.60}
 	self.defaults.profile.units.raid.combatText.enabled = false
+	self.defaults.profile.units.raid.incHeal = {enabled = false, cap = 1}
 	-- RAID PET
 	self.defaults.profile.units.raidpet.groupBy = "GROUP"
 	self.defaults.profile.units.raidpet.sortOrder = "ASC"
@@ -306,6 +287,7 @@ function ShadowUF:LoadUnitDefaults()
 	self.defaults.profile.units.raidpet.filters = {[1] = true, [2] = true, [3] = true, [4] = true, [5] = true, [6] = true, [7] = true, [8] = true}
 	self.defaults.profile.units.raidpet.fader = {enabled = false, combatAlpha = 1.0, inactiveAlpha = 0.60}
 	self.defaults.profile.units.raidpet.combatText.enabled = false
+	self.defaults.profile.units.raidpet.incHeal = {enabled = false, cap = 1}
 	-- MAINTANK
 	self.defaults.profile.units.maintank.groupFilter = "MAINTANK"
 	self.defaults.profile.units.maintank.groupBy = "GROUP"
@@ -315,6 +297,7 @@ function ShadowUF:LoadUnitDefaults()
 	self.defaults.profile.units.maintank.attribAnchorPoint = "RIGHT"
 	self.defaults.profile.units.maintank.offset = 0
 	self.defaults.profile.units.maintank.fader = {enabled = false, combatAlpha = 1.0, inactiveAlpha = 0.60}
+	self.defaults.profile.units.maintank.incHeal = {enabled = false, cap = 1}
 	-- MAINASSIST
 	self.defaults.profile.units.mainassist.groupFilter = "MAINASSIST"
 	self.defaults.profile.units.mainassist.groupBy = "GROUP"
@@ -324,10 +307,12 @@ function ShadowUF:LoadUnitDefaults()
 	self.defaults.profile.units.mainassist.attribAnchorPoint = "RIGHT"
 	self.defaults.profile.units.mainassist.offset = 0
 	self.defaults.profile.units.mainassist.fader = {enabled = false, combatAlpha = 1.0, inactiveAlpha = 0.60}
+	self.defaults.profile.units.mainassist.incHeal = {enabled = false, cap = 1}
 	-- PARTYPET
 	self.defaults.profile.positions.partypet.anchorTo = "$parent"
 	self.defaults.profile.positions.partypet.anchorPoint = "RB"
 	self.defaults.profile.units.partypet.fader = {enabled = false, combatAlpha = 1.0, inactiveAlpha = 0.60}
+	self.defaults.profile.units.partypet.incHeal = {enabled = false, cap = 1}
 	-- PARTYTARGET
 	self.defaults.profile.positions.partytarget.anchorTo = "$parent"
 	self.defaults.profile.positions.partytarget.anchorPoint = "RT"
@@ -427,8 +412,6 @@ function ShadowUF:HideBlizzardFrames()
 		BuffFrame:UnregisterAllEvents()
 		BuffFrame.Show = self.noop
 		BuffFrame:Hide()
---		ConsolidatedBuffs.Show = self.noop
---		ConsolidatedBuffs:Hide()
 		TemporaryEnchantFrame.Show = self.noop
 		TemporaryEnchantFrame:Hide()
 	end
@@ -437,11 +420,6 @@ function ShadowUF:HideBlizzardFrames()
 		PlayerFrame:UnregisterAllEvents()
 		PlayerFrame.Show = self.noop
 		PlayerFrame:Hide()
-
-		PlayerFrame:RegisterEvent('UNIT_ENTERING_VEHICLE')
-		PlayerFrame:RegisterEvent('UNIT_ENTERED_VEHICLE')
-		PlayerFrame:RegisterEvent('UNIT_EXITING_VEHICLE')
-		PlayerFrame:RegisterEvent('UNIT_EXITED_VEHICLE')
 
 		PlayerFrameHealthBar:UnregisterAllEvents()
 		PlayerFrameManaBar:UnregisterAllEvents()
@@ -468,34 +446,6 @@ function ShadowUF:HideBlizzardFrames()
 		ComboFrame:UnregisterAllEvents()
 		ComboFrame.Show = self.noop
 		ComboFrame:Hide()
-	end
-	
-	if( ShadowUF.db.profile.hidden.focus ) then
---[[		FocusFrame:UnregisterAllEvents()
-		FocusFrame.Show = self.noop
-		FocusFrame:Hide()
-
-		FocusFrameHealthBar:UnregisterAllEvents()
-		FocusFrameManaBar:UnregisterAllEvents()
-		FocusFrameSpellBar:UnregisterAllEvents() --]]
-	end
-		
-	if( ShadowUF.db.profile.hidden.boss ) then
---[[		for i=1, MAX_BOSS_FRAMES do
-			local name = "Boss" .. i .. "TargetFrame"
-			local frame = _G[name]
-
-			frame:UnregisterAllEvents()
-			frame.Show = self.noop
-			frame:Hide()
-
-			_G[name .. "HealthBar"]:UnregisterAllEvents()
-			_G[name .. "ManaBar"]:UnregisterAllEvents()
-		end --]]
-	end
-	
-	if( ShadowUF.db.profile.hidden.arena ) then
-		Arena_LoadUI = self.noop
 	end
 
 	-- Don't modify the raid menu because that will taint the MA/MT stuff and it'll break and that's bad

@@ -289,7 +289,7 @@ function Layout:SetupFrame(frame, config)
 	frame:SetBackdropBorderColor(backdrop.borderColor.r, backdrop.borderColor.g, backdrop.borderColor.b, backdrop.borderColor.a)
 	
 	-- Prevent these from updating while in combat to prevent tainting
-	if( not InCombatLockdown() ) then
+	if( not UnitAffectingCombat("player") ) then
 		frame:SetHeight(config.height)
 		frame:SetWidth(config.width)
 		frame:SetScale(config.scale)
@@ -335,13 +335,11 @@ function Layout:SetupBars(frame, config)
 			
 			if( widget:IsShown() and widget.SetStatusBarTexture ) then
 				widget:SetStatusBarTexture(mediaPath.statusbar)
---				widget:GetStatusBarTexture():SetHorizTile(false)
 			end
 
 			if( widget.background ) then
 				if( config[key].background ) then
 					widget.background:SetTexture(mediaPath.statusbar)
---					widget.background:SetHorizTile(false)
 					widget.background:Show()
 
 					widget.background.overrideColor = ShadowUF.db.profile.bars.backgroundColor or config[key].backgroundColor
@@ -507,7 +505,7 @@ function Layout:PositionWidgets(frame, config)
 			bar:ClearAllPoints()
 			bar:SetPoint("TOPLEFT", frame, "TOPLEFT", portraitOffset, xOffset)
 			
-			portraitHeight = portraitHeight + bar:GetHeight()
+			portraitHeight = portraitHeight + bar:GetHeight() + 1
 		end
 		
 		-- Figure out where the portrait is going to be anchored to

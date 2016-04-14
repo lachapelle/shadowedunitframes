@@ -1,22 +1,19 @@
 ## Interface: 20400
 ## Title: Shadowed Unit Frames
 ## Notes: An apple a day keeps the raptor away, or so they say
-## Author: Shadowed
-## Version: v3.2.12-5-g3fb7edd
+## Author: Shadowed, Aviana
+## Version: Backport v.01 from v3.2.12-5-g3fb7edd
 ## SavedVariables: ShadowedUFDB
-## OptionalDeps: Ace3, LibSharedMedia-3.0, LibHealComm-3.0, AceGUI-3.0-SharedMediaWidgets
-## X-Curse-Packaged-Version: v3.2.12-5-g3fb7edd
-## X-Curse-Project-Name: Shadowed Unit Frames
-## X-Curse-Project-ID: shadowed-unit-frames
-## X-Curse-Repository-ID: wow/shadowed-unit-frames/mainline
+## OptionalDeps: Ace3, LibSharedMedia-3.0, LibHealComm-3.0, AceGUI-3.0-SharedMediaWidgets, LibBanzai-2.0
+## X-GitHub-Url: https://github.com/Aviana/ShadowedUnitFrames
 
-#@no-lib-strip@
 libs\LibStub\LibStub.lua
-libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
-libs\LibSharedMedia-3.0\lib.xml
+libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
 libs\LibHealComm-3.0\lib.xml
-libs\AceDB-3.0\AceDB-3.0.xml
-#@end-no-lib-strip@
+libs\LibDruidMana-1.0\LibDruidMana-1.0.lua
+libs\LibBanzai-2.0\LibBanzai-2.0.lua
+libs\AceDB-3.0\AceDB-3.0.lua
 
 localization\enUS.lua
 localization\deDE.lua
@@ -44,7 +41,6 @@ modules\cast.lua
 modules\auras.lua
 modules\combattext.lua
 modules\totems.lua
-modules\runes.lua
 modules\fader.lua
 modules\combopoints.lua
 modules\incheal.lua

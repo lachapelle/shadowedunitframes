@@ -1,7 +1,20 @@
 local Druid = {}
+local druidlib
 ShadowUF:RegisterModule(Druid, "druidBar", ShadowUF.L["Druid mana bar"], true, "DRUID")
 
+local function callback(currMana, maxMana)
+	for _,frame in pairs(ShadowUF.Units.unitFrames) do
+		if frame.druidBar then
+			Druid:Update(frame)
+		end
+	end
+end
+
 function Druid:OnEnable(frame)
+	druidlib = druidlib or LibStub("LibDruidMana-1.0")
+	if not frame.druidBar then
+		druidlib:AddListener(callback)
+	end
 	frame.druidBar = frame.druidBar or ShadowUF.Units:CreateBar(frame)
 
 	frame:RegisterUnitEvent("UNIT_MAXMANA", self, "Update")
@@ -41,6 +54,6 @@ function Druid:PowerChanged(frame)
 end
 
 function Druid:Update(frame)
-	frame.druidBar:SetMinMaxValues(0, UnitPowerMax(frame.unit, 0))
-	frame.druidBar:SetValue(UnitIsDeadOrGhost(frame.unit) and 0 or not UnitIsConnected(frame.unit) and 0 or UnitPower(frame.unit, 0))
+	frame.druidBar:SetMinMaxValues(0, druidlib:GetMaximumMana())
+	frame.druidBar:SetValue(UnitIsDeadOrGhost(frame.unit) and 0 or not UnitIsConnected(frame.unit) and 0 or druidlib:GetCurrentMana())
 end

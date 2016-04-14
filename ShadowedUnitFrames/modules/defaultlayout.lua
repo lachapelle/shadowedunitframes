@@ -88,7 +88,7 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 		borderColor = {r = 0.30, g = 0.30, b = 0.50, a = 1},
 	}
 	config.hidden = {
-		cast = false, runes = true, buffs = BuffFrame:IsShown() and true or false, party = true, player = true, pet = true, target = true, focus = true, boss = true, arena = true
+		cast = false, runes = true, buffs = BuffFrame:IsShown() and true or false, party = true, player = true, pet = true, target = true, focus = true
 	}
 	config.font = {
 		name = "Myriad Condensed Web",
@@ -116,9 +116,7 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 		DRUID = {r = 1.0, g = 0.49, b = 0.04},
 		SHAMAN = {r = 0.14, g = 0.35, b = 1.0},
 		WARRIOR = {r = 0.78, g = 0.61, b = 0.43},
-		DEATHKNIGHT = {r = 0.77, g = 0.12 , b = 0.23},
 		PET = {r = 0.20, g = 0.90, b = 0.20},
-		VEHICLE = {r = 0.23, g = 0.41, b = 0.23},
 	}
 	config.powerColors = {
 		MANA = {r = 0.30, g = 0.50, b = 0.85}, 
@@ -126,10 +124,6 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 		FOCUS = {r = 1.0, g = 0.85, b = 0}, 
 		ENERGY = {r = 1.0, g = 0.85, b = 0.10}, 
 		HAPPINESS = {r = 0.50, g = 0.90, b = 0.70},
-		RUNES = {r = 0.50, g = 0.50, b = 0.50}, 
-		RUNIC_POWER = {b = 0.60, g = 0.45, r = 0.35},
-		AMMOSLOT = {r = 0.85, g = 0.60, b = 0.55},
-		FUEL = {r = 0.85, g = 0.47, b = 0.36},
 	}
 	config.healthColors = {
 		tapped = {r = 0.5, g = 0.5, b = 0.5},
@@ -147,8 +141,6 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 	config.castColors = {
 		channel = {r = 0.25, g = 0.25, b = 1.0},
 		cast = {r = 1.0, g = 0.70, b = 0.30},
-		interrupted = {r = 1, g = 0, b = 0},
-		uninterruptible = {r = 0.71, g = 0, b = 1},
 		finished = {r = 0.10, g = 1.0, b = 0.10},
 	}
 	config.xpColors = {
@@ -174,11 +166,6 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 		maintanktarget = {anchorPoint = "RT", anchorTo = "$parent", x = 0, y = 0},
 		mainassist = {anchorPoint = "C", anchorTo = "UIParent", x = 0, y = 0},
 		mainassisttarget = {anchorPoint = "RT", anchorTo = "$parent", x = 0, y = 0},
-		arena = {anchorPoint = "C", anchorTo = "UIParent", point = "", relativePoint = "", x = 0, y = 0},
-		arenapet = {anchorPoint = "RB", anchorTo = "$parent", x = 0, y = 0},
-		arenatarget = {anchorPoint = "RT", anchorTo = "$parent", x = 0, y = 0},
-		boss = {anchorPoint = "C", anchorTo = "UIParent", point = "", relativePoint = "", x = 0, y = 0},
-		bosstarget = {anchorPoint = "RB", anchorTo = "$parent", x = 0, y = 0},
 	}
 	
 	-- Parent unit options that all the children will inherit unless they override it
@@ -206,7 +193,6 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 			ready = {anchorTo = "$parent", anchorPoint = "LC", size = 24, x = 35, y = 0},
 			role = {anchorTo = "$parent", anchorPoint = "TL", size = 14, x = 30, y = -11},
 			status = {anchorTo = "$parent", anchorPoint = "LB", size = 16, x = 12, y = -2},
-			lfdRole = {enabled = true, anchorPoint = "BR", size = 14, x = 3, y = 14, anchorTo = "$parent"}
 		},
 		highlight = {size = 10},
 		combatText = {anchorTo = "$parent", anchorPoint = "C", x = 0, y = 0},
@@ -216,7 +202,6 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 		druidBar = {background = true, height = 0.40, order = 25},
 		xpBar = {background = true, height = 0.25, order = 55},
 		castBar = {background = true, height = 0.60, order = 40, icon = "HIDE", name = {enabled = true, size = 0, anchorTo = "$parent", rank = true, anchorPoint = "CLI", x = 1, y = 0}, time = {enabled = true, size = 0, anchorTo = "$parent", anchorPoint = "CRI", x = -1, y = 0}},
-		runeBar = {background = false, height = 0.40, order = 70},
 		totemBar = {background = false, height = 0.40, order = 70},
 	}
 	
@@ -235,7 +220,7 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 			attribAnchorPoint = "LEFT",
 			healthBar = {reactionType = "none"},
 			powerBar = {height = 0.30},
-			incHeal = {cap = 1},
+			incHeal = {enabled = false, cap = 1},
 			indicators = {
 				pvp = {anchorTo = "$parent", anchorPoint = "BL", size = 22, x = 0, y = 11},
 				masterLoot = {anchorTo = "$parent", anchorPoint = "TR", size = 12, x = -2, y = -10},
@@ -263,7 +248,7 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 			attribAnchorPoint = "LEFT",
 			healthBar = {reactionType = "none"},
 			powerBar = {height = 0.30},
-			incHeal = {cap = 1},
+			incHeal = {enabled = false, cap = 1},
 			indicators = {
 				pvp = {anchorTo = "$parent", anchorPoint = "BL", size = 22, x = 0, y = 11},
 				masterLoot = {anchorTo = "$parent", anchorPoint = "TR", size = 12, x = -2, y = -10},
@@ -278,16 +263,15 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 				{text = "[name]"},
 			},
 		},
-		
-	player = {
+		player = {
 			width = 190,
 			height = 45,
 			scale = 1.0,
 			portrait = {enabled = true, fullAfter = 50},
 			castBar = {order = 60},
 			xpBar = {order = 55},
-			runeBar = {enabled = true, order = 70},
 			totemBar = {enabled = true, order = 70},
+			incHeal = {enabled = false, cap = 1},
 			auras = {
 				buffs = {enabled = false, maxRows = 1, temporary = playerClass == "ROGUE" or playerClass == "SHAMAN"},
 				debuffs = {enabled = false, maxRows = 1},
@@ -310,6 +294,7 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 			columnSpacing = 30,
 			portrait = {enabled = true, fullAfter = 50},
 			castBar = {order = 60},
+			incHeal = {enabled = false, cap = 1},
 			offset = 23,
 			auras = {
 				buffs = {enabled = true, maxRows = 1},
@@ -323,90 +308,6 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 				{text = "[(()afk() )][name]"},
 			},
 		},
-		boss = {
-			enabled = true,
-			width = 160,
-			height = 40,
-			scale = 1.0,
-			attribPoint = "TOP",
-			attribAnchorPoint = "LEFT",
-			offset = 20,
-			auras = {
-				buffs = {enabled = true, maxRows = 1, perRow = 8},
-				debuffs = {enabled = true, maxRows = 1, perRow = 8},
-			},
-			text = {
-				{text = "[name]"},
-				{text = "[curmaxhp]"},
-				{text = "[perpp]"},
-				{text = "[curmaxpp]"},
-				{text = "[name]"},
-			},
-			portrait = {enabled = false},
-		},
-		bosstarget = {
-			width = 90,
-			height = 25,
-			scale = 1.0,
-			powerBar = {height = 0.60},
-			text = {
-				{text = "[name]"},
-				{text = "[curhp]"},
-				{text = ""},
-				{text = ""},
-				{text = "[name]"},
-			},
-		},
-		arena = {
-			width = 170,
-			height = 45,
-			scale = 1.0,
-			attribPoint = "TOP",
-			attribAnchorPoint = "LEFT",
-			portrait = {enabled = false, fullAfter = 50},
-			castBar = {order = 60},
-			offset = 25,
-			auras = {
-				buffs = {enabled = true, maxRows = 1, perRow = 9},
-				debuffs = {enabled = true, maxRows = 1, perRow = 9},
-			},
-			text = {
-				{text = "[name]"},
-				{text = "[curmaxhp]"},
-				{text = "[perpp]"},
-				{text = "[curmaxpp]"},
-				{text = "[name]"},
-			},
-		},
-		arenapet = {
-			width = 90,
-			height = 25,
-			scale = 1.0,
-			powerBar = {height = 0.60},
-			text = {
-				{text = "[name]"},
-				{text = "[curhp]"},
-				{text = ""},
-				{text = ""},
-				{text = "[name]"},
-			},
-		},
-		arenatarget = {
-			width = 90,
-			height = 25,
-			scale = 1.0,
-			powerBar = {height = 0.60},
-			indicators = {
-				pvp = {anchorTo = "$parent", anchorPoint = "BL", size = 22, x = 0, y = 11},
-			},
-			text = {
-				{text = "[name]"},
-				{text = "[curhp]"},
-				{text = ""},
-				{text = ""},
-				{text = "[name]"},
-			},
-		},
 		maintank = {
 			width = 150,
 			height = 40,
@@ -417,9 +318,9 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 			unitsPerColumn = 5,
 			maxColumns = 1,
 			columnSpacing = 5,
-			incHeal = {cap = 1},
 			portrait = {enabled = false, fullAfter = 50},
 			castBar = {order = 60},
+			incHeal = {enabled = false, cap = 1},
 			auras = {
 				buffs = {enabled = false},
 				debuffs = {enabled = false},
@@ -458,9 +359,9 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 			unitsPerColumn = 5,
 			maxColumns = 1,
 			columnSpacing = 5,
-			incHeal = {cap = 1},
 			portrait = {enabled = false, fullAfter = 50},
 			castBar = {order = 60},
+			incHeal = {enabled = false, cap = 1},
 			auras = {
 				buffs = {enabled = false},
 				debuffs = {enabled = false},
@@ -526,8 +427,8 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 			castBar = {order = 60},
 			comboPoints = {anchorTo = "$parent", order = 60, anchorPoint = "BR", x = -3, y = 8, size = 14, spacing = -4, growth = "LEFT", isBar = true},
 			indicators = {
-				lfdRole = {enabled = false}
 			},
+			incHeal = {enabled = false, cap = 1},
 			auras = {
 				buffs = {enabled = true},
 				debuffs = {enabled = true},
@@ -548,6 +449,7 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 			healthBar = {reactionType = "none"},
 			portrait = {enabled = false, fullAfter = 50},
 			castBar = {order = 60},
+			incHeal = {enabled = false, cap = 1},
 			indicators = {
 				happiness = {enabled = false, anchorTo = "$parent", anchorPoint = "BR", size = 14, x = 3, y = 13},
 			},
@@ -581,8 +483,8 @@ function ShadowUF:LoadDefaultLayout(useMerge)
 			powerBar = {height = 0.60},
 			portrait = {enabled = false, fullAfter = 50},
 			castBar = {order = 60},
+			incHeal = {enabled = false, cap = 1},
 			indicators = {
-				lfdRole = {enabled = false},
 			},
 			text = {
 				{text = "[(()afk() )][name]"},

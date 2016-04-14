@@ -1,6 +1,74 @@
 local Combat = {}
 ShadowUF:RegisterModule(Combat, "combatText", ShadowUF.L["Combat text"])
 
+local function CombatFeedback_OnCombatEvent(frame, event, flags, amount, type)
+	local feedbackText = frame.feedbackText
+	local fontHeight = frame.feedbackFontHeight;
+	local text = "";
+	local r = 1.0;
+	local g = 1.0;
+	local b = 1.0;
+
+	if( event == "IMMUNE" ) then
+		fontHeight = fontHeight * 0.5;
+		text = CombatFeedbackText[event];
+	elseif ( event == "WOUND" ) then
+		if ( amount ~= 0 ) then
+			if ( flags == "CRITICAL" or flags == "CRUSHING" ) then
+				fontHeight = fontHeight * 1.5;
+			elseif ( flags == "GLANCING" ) then
+				fontHeight = fontHeight * 0.75;
+			end
+			if ( type ~= SCHOOL_MASK_PHYSICAL ) then
+				r = 1.0;
+				g = 1.0;
+				b = 0.0;
+			end
+			text = amount;
+		elseif ( flags == "ABSORB" ) then
+			fontHeight = fontHeight * 0.75;
+			text = CombatFeedbackText["ABSORB"];
+		elseif ( flags == "BLOCK" ) then
+			fontHeight = fontHeight * 0.75;
+			text = CombatFeedbackText["BLOCK"];
+		elseif ( flags == "RESIST" ) then
+			fontHeight = fontHeight * 0.75;
+			text = CombatFeedbackText["RESIST"];
+		else
+			text = CombatFeedbackText["MISS"];
+		end
+	elseif ( event == "BLOCK" ) then
+		fontHeight = fontHeight * 0.75;
+		text = CombatFeedbackText[event];
+	elseif ( event == "HEAL" ) then
+		text = amount;
+		r = 0.0;
+		g = 1.0;
+		b = 0.0;
+		if ( flags == "CRITICAL" ) then
+			fontHeight = fontHeight * 1.5;
+		end
+	elseif ( event == "ENERGIZE" ) then
+		text = amount;
+		r = 0.41;
+		g = 0.8;
+		b = 0.94;
+		if ( flags == "CRITICAL" ) then
+			fontHeight = fontHeight * 1.5;
+		end
+	else
+		text = CombatFeedbackText[event];
+	end
+
+	frame.feedbackStartTime = GetTime();
+
+	feedbackText:SetTextHeight(fontHeight);
+	feedbackText:SetText(text);
+	feedbackText:SetTextColor(r, g, b);
+	feedbackText:SetAlpha(0.0);
+	feedbackText:Show();
+end
+
 function Combat:OnEnable(frame)
 	if( not frame.combatText ) then
 		frame.combatText = CreateFrame("Frame", nil, frame.highFrame)

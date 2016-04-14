@@ -4,7 +4,17 @@ local playerClass = select(2, UnitClass("player"))
 local modifyUnits, globalConfig = {}, {}
 local L = ShadowUF.L
 
-local LOCALIZED_CLASS_NAMES_MALE = {}
+local LOCALIZED_CLASS_NAMES_MALE = {
+	["WARRIOR"] = "Warrior",
+	["DRUID"] = "Druid",
+	["PRIEST"] = "Priest",
+	["MAGE"] = "Mage",
+	["WARLOCK"] = "Warlock",
+	["PALADIN"] = "Paladin",
+	["SHAMAN"] = "Shaman",
+	["HUNTER"] = "Hunter",
+	["ROGUE"] = "Rogue",
+}
 
 ShadowUF.Config = Config
 
@@ -20,11 +30,9 @@ local unitCategories = {
 	player = {"player", "pet"},
 	general = {"target", "targettarget", "targettargettarget", "focus", "focustarget", "pettarget"},
 	party = {"party", "partypet", "partytarget"},
-	raid = {"raid", "raidpet", "boss", "bosstarget", "maintank", "maintanktarget", "mainassist", "mainassisttarget"},
-	arena = {"arena", "arenapet", "arenatarget"}}
+	raid = {"raid", "raidpet", "maintank", "maintanktarget", "mainassist", "mainassisttarget"}}
 
 local UNIT_DESC = {
-	["boss"] = L["Boss units are for only certain fights, such as Blood Princes or the Gunship battle, you will not see them for every boss fight."],
 	["mainassist"] = L["Main Assists's are set by the Blizzard Main Assist system or mods that use them such as oRA3."],
 	["maintank"] = L["Main Tank's are set by the Blizzard Main Tank system or mods that use them such as oRA3."],
 }
@@ -38,10 +46,10 @@ local PAGE_DESC = {
 	["tags"] = L["Advanced tag management, allows you to add your own custom tags."],
 	["filter"] = L["Simple aura filtering by whitelists and blacklists."],
 }
-local INDICATOR_NAMES = {["happiness"] = L["Happiness"], ["leader"] = L["Leader"], ["lfdRole"] = L["Dungeon role"], ["masterLoot"] = L["Master looter"], ["pvp"] = L["PvP Flag"],["raidTarget"] = L["Raid target"], ["ready"] = L["Ready status"], ["role"] = L["Raid role"], ["status"] = L["Combat status"], ["class"] = L["Class icon"]}
-local AREA_NAMES = {["arena"] = L["Arenas"],["none"] = L["Everywhere else"], ["party"] = L["Party instances"], ["pvp"] = L["Battlegrounds"], ["raid"] = L["Raid instances"],}
+local INDICATOR_NAMES = {["happiness"] = L["Happiness"], ["leader"] = L["Leader"], ["masterLoot"] = L["Master looter"], ["pvp"] = L["PvP Flag"],["raidTarget"] = L["Raid target"], ["ready"] = L["Ready status"], ["role"] = L["Raid role"], ["status"] = L["Combat status"], ["class"] = L["Class icon"]}
+local AREA_NAMES = {["none"] = L["Everywhere else"], ["party"] = L["Party instances"], ["pvp"] = L["Battlegrounds"], ["raid"] = L["Raid instances"],}
 local INDICATOR_DESC = {["happiness"] = L["Indicator for your pet's happiness, only applies to Hunters."],
-		["leader"] = L["Crown indicator for group leaders."], ["lfdRole"] = L["Role the unit is playing in dungeons formed through the Looking For Dungeon system."],
+		["leader"] = L["Crown indicator for group leaders."],
 		["masterLoot"] = L["Bag indicator for master looters."], ["pvp"] = L["PVP flag indicator, Horde for Horde flagged pvpers and Alliance for Alliance flagged pvpers."],
 		["raidTarget"] = L["Raid target indicator."], ["ready"] = L["Ready status of group members."],
 		["role"] = L["Raid role indicator, adds a shield indicator for main tanks and a sword icon for main assists."], ["status"] = L["Status indicator, shows if the unit is currently in combat. For the player it will also show if you are rested."], ["class"] = L["Class icon for players."]}
@@ -61,7 +69,7 @@ local function getPageDescription(info)
 end
 
 local function getFrameName(unit)
-	if( unit == "raidpet" or unit == "raid" or unit == "party" or unit == "maintank" or unit == "mainassist" or unit == "boss" or unit == "arena" ) then
+	if( unit == "raidpet" or unit == "raid" or unit == "party" or unit == "maintank" or unit == "mainassist" ) then
 		return string.format("#SUFHeader%s", unit)
 	end
 	
@@ -673,6 +681,7 @@ local function loadGeneralOptions()
 									set(info, value)
 									ShadowUF.modules.movers:Update()
 								end,
+								disabled = function() return UnitAffectingCombat("player") end,
 								arg = "locked",
 							},
 							sep = {
@@ -1081,29 +1090,6 @@ local function loadGeneralOptions()
 								hasAlpha = true,
 								arg = "powerColors.HAPPINESS",
 							},
-							RUNIC_POWER = {
-								order = 6,
-								type = "color",
-								name = L["Runic Power"],
-								hasAlpha = true,
-								arg = "powerColors.RUNIC_POWER",
-							},
-							AMMOSLOT = {
-								order = 7,
-								type = "color",
-								name = L["Ammo"],
-								hasAlpha = true,
-								arg = "powerColors.AMMOSLOT",
-								hidden = hideAdvancedOption,
-							},
-							FUEL = {
-								order = 8,
-								type = "color",
-								name = L["Fuel"],
-								hasAlpha = true,
-								arg = "powerColors.FUEL",
-								hidden = hideAdvancedOption,
-							},
 						},
 					},
 					cast = {
@@ -1142,21 +1128,6 @@ local function loadGeneralOptions()
 								desc = L["Color used when a cast is successfully finished."],
 								hidden = hideAdvancedOption,
 								arg = "castColors.finished",
-							},
-							interrupted = {
-								order = 4,
-								type = "color",
-								name = L["Cast interrupted"],
-								desc = L["Color used when a cast is interrupted either by the caster themselves or by another unit."],
-								hidden = hideAdvancedOption,
-								arg = "castColors.interrupted",
-							},
-							uninterruptible = {
-								order = 5,
-								type = "color",
-								name = L["Cast uninterruptible"],
-								desc = L["Color used when a cast cannot be interrupted, this is only used for PvE mobs."],
-								arg = "castColors.uninterruptible",
 							},
 						},
 					},
@@ -1278,7 +1249,6 @@ local function loadGeneralOptions()
 	end
 	
 	options.args.general.args.color.args.classColors.args.PET = Config.classTable
-	options.args.general.args.color.args.classColors.args.VEHICLE = Config.classTable
 	
 	options.args.general.args.profile.order = 4
 end
@@ -1329,14 +1299,10 @@ local function loadHideOptions()
 				args = {
 					buffs = Config.hideTable,
 					cast = Config.hideTable,
-					runes = Config.hideTable,
 					party = Config.hideTable,
 					player = Config.hideTable,
 					pet = Config.hideTable,
 					target = Config.hideTable,
-					focus = Config.hideTable,
-					boss = Config.hideTable,
-					arena = Config.hideTable,
 				},
 			},
 		}
@@ -1406,7 +1372,7 @@ local function loadUnitOptions()
 		ShadowUF.db.profile.positions[info[2]][info[#(info)]] = value
 		fixPositions(info)
 		
-		if( info[2] == "raid" or info[2] == "raidpet" or info[2] == "maintank" or info[2] == "mainassist" or info[2] == "party" or info[2] == "boss" or info[2] == "arena" ) then
+		if( info[2] == "raid" or info[2] == "raidpet" or info[2] == "maintank" or info[2] == "mainassist" or info[2] == "party" ) then
 			ShadowUF.Units:ReloadHeader(info[2])
 		else
 			ShadowUF.Layout:Reload(info[2])
@@ -1836,13 +1802,6 @@ local function loadUnitOptions()
 				name = "",
 				width = "full",
 			},
-			player = {
-				order = 7,
-				type = "toggle",
-				name = L["Show your auras only"],
-				desc = L["Filter out any auras that you did not cast yourself."],
-				arg = "auras.$parent.player",
-			},
 			raid = {
 				order = 8,
 				type = "toggle",
@@ -1860,34 +1819,16 @@ local function loadUnitOptions()
 			selfTimers = {
 				order = 9.5,
 				type = "toggle",
-				name = L["Timers for self auras only"],
-				desc = L["Hides the cooldown ring for any auras that you did not cast."],
+				name = L["Timers for auras"],
+				desc = L["Hides the cooldown ring for auras."],
 				hidden = hideAdvancedOption,
 				arg = "auras.$parent.selfTimers",
-			},
-			enlargeSelf = {
-				order = 10,
-				type = "toggle",
-				name = L["Enlarge your auras"],
-				desc = L["If you casted the aura, then the buff icon will be increased in size to make it more visible."],
-				arg = "auras.$parent.enlargeSelf",
-			},
-			selfScale = {
-				order = 11,
-				type = "range",
-				name = L["Self aura size"],
-				desc = L["Scale for auras that you casted, any number above 100% is bigger tahn default, any number below 100% is smaller than default."],
-				min = 1, max = 3, step = 0.10,
-				isPercent = true,
-				disabled = function(info) return not getVariable(info[2], "auras", info[#(info) - 1], "enlargeSelf") end,
-				hidden = hideAdvancedOption,
-				arg = "auras.$parent.selfScale",
 			},
 			selfTimersDouble = {
 				order = 11,
 				type = "toggle",
-				name = L["Timers for self auras only"],
-				desc = L["Hides the cooldown ring for any auras that you did not cast."],
+				name = L["Timers for auras"],
+				desc = L["Hides the cooldown ring for auras."],
 				hidden = hideBasicOption,
 				arg = "auras.$parent.selfTimers",
 				width = "double",
@@ -2138,43 +2079,6 @@ local function loadUnitOptions()
 				set = setUnit,
 				get = getUnit,
 				args = {
-					vehicle = {
-						order = 1,
-						type = "group",
-						inline = true,
-						name = L["Vehicles"],
-						hidden = function(info) return info[2] ~= "player" and info[2] ~= "party" or not ShadowUF.db.profile.advanced end,
-						args = {
-							disable = {
-								order = 0,
-								type = "toggle",
-								name = L["Disable vehicle swap"],
-								desc = L["Disables the unit frame from turning into a vehicle when the player enters one."],
-								set = function(info, value)
-									setUnit(info, value)
-									local unit = info[2]
-									if( unit == "player" ) then
-										if( ShadowUF.Units.unitFrames.pet ) then
-											ShadowUF.Units.unitFrames.pet:SetAttribute("disableVehicleSwap", ShadowUF.db.profile.units[unit].disableVehicle)
-										end
-										
-										if( ShadowUF.Units.unitFrames.player ) then
-											ShadowUF.Units:CheckVehicleStatus(ShadowUF.Units.unitFrames.player)
-										end
-									elseif( unit == "party" ) then
-										for frame in pairs(ShadowUF.Units.unitFrames) do
-											if( frame.unitType == "partypet" ) then
-												frame:SetAttribute("disableVehicleSwap", ShadowUF.db.profile.units[unit].disableVehicle)
-											elseif( frame.unitType == "party" ) then
-												ShadowUF.Units:CheckVehicleStatus(frame)
-											end
-										end
-									end
-								end,
-								arg = "disableVehicle",
-							},
-						},
-					},
 					portrait = {
 						order = 2,
 						type = "group",
@@ -2306,7 +2210,7 @@ local function loadUnitOptions()
 								name = L["On aggro"],
 								desc = L["Highlight units that have aggro on any mob."],
 								arg = "highlight.aggro",
-								hidden = function(info) return info[2] == "arena" or info[2] == "arenapet" or ShadowUF.fakeUnits[info[2]] end,
+								hidden = function(info) return ShadowUF.fakeUnits[info[2]] end,
 							},
 							debuff = {
 								order = 6,
@@ -2314,7 +2218,7 @@ local function loadUnitOptions()
 								name = L["On curable debuff"],
 								desc = L["Highlight units that are debuffed with something you can cure."],
 								arg = "highlight.debuff",
-								hidden = function(info) return string.match(info[2], "^arena") or string.match(info[2], "^boss") end,
+								hidden = function(info) return end,
 							},
 							alpha = {
 								order = 7,
@@ -2494,7 +2398,7 @@ local function loadUnitOptions()
 				name = function(info) return L.units[info[#(info) - 1]] end,
 				hidden = function(info)
 					local unit = info[#(info) - 1]
-					return unit ~= "raid" and unit ~= "raidpet" and unit ~= "party" and unit ~= "mainassist" and unit ~= "maintank" and unit ~= "boss" and unit ~= "arena"
+					return unit ~= "raid" and unit ~= "raidpet" and unit ~= "party" and unit ~= "mainassist" and unit ~= "maintank"
 				end,
 				set = function(info, value)
 					setUnit(info, value)
@@ -2675,7 +2579,7 @@ local function loadUnitOptions()
 								name = L["Max columns"],
 								min = 1, max = 20, step = 1,
 								arg = "maxColumns",
-								hidden = function(info) return info[2] == "boss" or info[2] == "arena" or hideSplitOrRaidOption(info) end,
+								hidden = function(info) return hideSplitOrRaidOption(info) end,
 							},
 							unitsPerColumn = {
 								order = 8,
@@ -2683,7 +2587,7 @@ local function loadUnitOptions()
 								name = L["Units per column"],
 								min = 1, max = 40, step = 1,
 								arg = "unitsPerColumn",
-								hidden = function(info) return info[2] == "boss" or info[2] == "arena" or hideSplitOrRaidOption(info) end,
+								hidden = function(info) return hideSplitOrRaidOption(info) end,
 							},
 							partyPerColumn = {
 								order = 9,
@@ -2718,7 +2622,7 @@ local function loadUnitOptions()
 						type = "group",
 						inline = true,
 						name = L["Sorting"],
-						hidden = function(info) return info[2] == "boss" or info[2] == "arena" or ( info[2] ~= "raid" and not ShadowUF.db.profile.advanced ) end,
+						hidden = function(info) return info[2] ~= "raid" and not ShadowUF.db.profile.advanced end,
 						args = {
 							sortMethod = {
 								order = 2,
@@ -2973,14 +2877,6 @@ local function loadUnitOptions()
 						name = L["General"],
 						hidden = false,
 						args = {
-							runeBar = {
-								order = 1,
-								type = "toggle",
-								name = string.format(L["Enable %s"], L["Rune bar"]),
-								desc = L["Adds rune bars and timers before runes refresh to the player frame."],
-								hidden = hideRestrictedOption,
-								arg = "runeBar.enabled",
-							},
 							totemBar = {
 								order = 1.5,
 								type = "toggle",
@@ -3750,7 +3646,7 @@ local function loadUnitOptions()
 		type = "header",
 		name = function(info)
 			local cat = info[#(info)]
-			return cat == "playercat" and L["Player"] or cat == "generalcat" and L["General"] or cat == "raidcat" and L["Raid"] or cat == "partycat" and L["Party"] or cat == "arenacat" and L["Arena"]
+			return cat == "playercat" and L["Player"] or cat == "generalcat" and L["General"] or cat == "raidcat" and L["Raid"] or cat == "partycat" and L["Party"]
 		end,
 		width = "full",
 	}
@@ -3856,9 +3752,11 @@ local function loadFilterOptions()
 							
 							-- Delete anything that used this filter too
 							local filterList = filterType == "whitelist" and ShadowUF.db.profile.filters.zonewhite or filterType == "blacklist" and ShadowUF.db.profile.filters.zoneblack
-							for id, filterUsed in pairs(filterList) do
-								if( filterUsed == filter ) then
-									filterList[id] = nil
+							if type(filterList) == "table" then
+								for id, filterUsed in pairs(filterList) do
+									if( filterUsed == filter ) then
+										filterList[id] = nil
+									end
 								end
 							end
 							
@@ -3968,7 +3866,7 @@ local function loadFilterOptions()
 
 	-- Container table for a filter zone
 	local globalSettings = {}
-	local zoneList = {"none", "pvp", "arena", "party", "raid"}
+	local zoneList = {"none", "pvp", "party", "raid"}
 	local filterTable = {
 		order = function(info) return info[#(info)] == "global" and 1 or info[#(info)] == "none" and 2 or 3 end,
 		type = "group",
@@ -4161,8 +4059,12 @@ local function loadFilterOptions()
 		hasBlacklist = true
 		hasWhitelist = true
 	
-		filterMap = {}
-		spellMap = {}
+		for k,_ in pairs(filterMap) do
+			filtermap[k] = nil
+		end
+		for k,_ in pairs(spellMap) do
+			spellMap[k] = nil
+		end
 		
 		options.args.filter.args.filters.args.whitelists = buildList("whitelists")
 		options.args.filter.args.filters.args.blacklists = buildList("blacklists")
@@ -4203,7 +4105,6 @@ local function loadFilterOptions()
 			global = filterTable,
 			none = filterTable,
 			pvp = filterTable,
-			arena = filterTable,
 			party = filterTable,
 			raid = filterTable,
 		}
@@ -4344,7 +4245,9 @@ local function loadFilterOptions()
 											AceDialog.Status.ShadowedUF.children.filter.children.filters.status.groups.groups[addFilter.type] = true
 											selectTabGroup("filter", "filters", addFilter.type .. "\001" .. id)
 											
-											table.wipe(addFilter)
+											for k,_ in pairs(addFilter) do
+												addFilter[k] = nil
+											end
 											addFilter.type = "whitelists"
 										end,
 									},
@@ -5070,7 +4973,6 @@ local function loadVisibilityOptions()
 				},
 			},
 			pvp = areaTable,
-			arena = areaTable,
 			party = areaTable,
 			raid = areaTable,
 		},

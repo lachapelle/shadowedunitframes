@@ -3,7 +3,7 @@ ShadowUF:RegisterModule(Combo, "comboPoints", ShadowUF.L["Combo points"])
 
 function Combo:OnEnable(frame)
 	frame.comboPoints = frame.comboPoints or CreateFrame("Frame", nil, frame)
-	frame:RegisterNormalEvent("UNIT_COMBO_POINTS", self, "Update")
+	frame:RegisterNormalEvent("PLAYER_COMBO_POINTS", self, "Update")
 	frame:RegisterUpdateFunc(self, "Update")
 end
 
@@ -106,12 +106,7 @@ function Combo:OnDisable(frame)
 end
 
 function Combo:Update(frame)
-	-- For Malygos dragons, they also self cast their CP on themselves, which is why we check CP on ourself!
-	local playerUnit = "player"
-	local points = GetComboPoints(playerUnit)
-	if( points == 0 ) then
-		points = GetComboPoints(playerUnit, playerUnit)
-	end
+	local points = GetComboPoints()
 	
 	-- Bar display, hide it if we don't have any combo points
 	if( ShadowUF.db.profile.units[frame.unitType].comboPoints.isBar ) then

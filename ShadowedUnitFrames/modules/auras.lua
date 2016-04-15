@@ -410,14 +410,8 @@ local function updateTemporaryEnchant(frame, slot, tempData, hasEnchant, timeLef
 		button.cooldown:Show()
 	end
 
-	-- Enlarge our own auras
-	if( config.enlargeSelf and caster == ShadowUF.playerUnit ) then
-		button.isSelfScaled = true
-		button:SetScale(config.selfScale)
-	else
-		button.isSelfScaled = nil
-		button:SetScale(1)
-	end
+	button.isSelfScaled = nil
+	button:SetScale(1)
 
 	-- Size it
 	button:SetHeight(config.size)
@@ -523,14 +517,8 @@ local function scan(parent, frame, type, config, filter)
 				button.cooldown:Hide()
 			end
 			
-			-- Enlarge our own auras
-			if( config.enlargeSelf ) then
-				button.isSelfScaled = true
-				button:SetScale(config.selfScale)
-			else
-				button.isSelfScaled = nil
-				button:SetScale(1)
-			end
+			button.isSelfScaled = nil
+			button:SetScale(1)
 
 			-- Size it
 			button:SetHeight(config.size)
@@ -556,10 +544,6 @@ local function scan(parent, frame, type, config, filter)
 
 	for i=frame.totalAuras + 1, #(frame.buttons) do frame.buttons[i]:Hide() end
 
-	-- The default 1.30 scale doesn't need special handling, after that it does
-	if( config.enlargeSelf ) then
-		positionAllButtons(frame, config)
-	end
 end
 
 Auras.scan = scan

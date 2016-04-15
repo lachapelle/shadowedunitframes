@@ -27,7 +27,7 @@ end
 
 local function callback(aggro, name, ...)
 	for _,frame in pairs(ShadowUF.Units.unitFrames) do
-		if UnitName(frame.unit) == name and UnitIsPlayer(frame.unit) then
+		if frame.unit and UnitName(frame.unit) == name and UnitIsPlayer(frame.unit) then
 			Banzai:UpdateTags(frame)
 		end
 	end
@@ -563,7 +563,7 @@ Tags.defaultTags = {
 		end
 		
 		if( UnitCanAttack("player", unit) ) then
-			local color = ShadowUF:Hex(GetQuestDifficultyColor(level > 0 and level or 99))
+			local color = ShadowUF:Hex(GetDifficultyColor(level > 0 and level or 99))
 			if( not color ) then
 				return level > 0 and level or "??"
 			end
@@ -858,7 +858,7 @@ Tags.defaultCategories = {
 	["incheal"]				= "health",
 	["incheal:name"]		= "health",
 	["smart:curmaxhp"]		= "health",
-	["smart:curmaxpp"]		= "health",
+	["smart:curmaxpp"]		= "power",
 	["afk"]					= "status",
 	["afk:time"]			= "status",
 	["status:time"]			= "status",

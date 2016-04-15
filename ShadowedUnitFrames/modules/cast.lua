@@ -401,7 +401,7 @@ function Cast:UpdateDelay(frame, spell, rank, displayName, icon, startTime, endT
 end
 
 -- Update the actual bar
-function Cast:UpdateCast(frame, unit, channelled, spell, rank, displayName, icon, startTime, endTime, isTradeSkill, castID, notInterruptible)
+function Cast:UpdateCast(frame, unit, channelled, spell, rank, displayName, icon, startTime, endTime, isTradeSkill, castID)
 	if( not spell ) then return end
 	local cast = frame.castBar.bar
 	if( ShadowUF.db.profile.units[frame.unitType].castBar.autoHide ) then
@@ -454,9 +454,7 @@ function Cast:UpdateCast(frame, unit, channelled, spell, rank, displayName, icon
 		cast:SetScript("OnUpdate", castOnUpdate)
 	end
 	
-	if( notInterruptible ) then
-		setBarColor(cast, ShadowUF.db.profile.castColors.uninterruptible.r, ShadowUF.db.profile.castColors.uninterruptible.g, ShadowUF.db.profile.castColors.uninterruptible.b)
-	elseif( cast.isChannelled ) then
+	if( cast.isChannelled ) then
 		setBarColor(cast, ShadowUF.db.profile.castColors.channel.r, ShadowUF.db.profile.castColors.channel.g, ShadowUF.db.profile.castColors.channel.b)
 	else
 		setBarColor(cast, ShadowUF.db.profile.castColors.cast.r, ShadowUF.db.profile.castColors.cast.g, ShadowUF.db.profile.castColors.cast.b)

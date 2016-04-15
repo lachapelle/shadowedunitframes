@@ -177,7 +177,7 @@ end
 function IncHeal:UpdateIncoming(interrupted, ...)
 	for frame in pairs(frames) do
 		for i=1, select("#", ...) do
-			if( select(i, ...) == unitFullName(frame.unit) ) then
+			if( frame.unit and select(i, ...) == unitFullName(frame.unit) ) then
 				updateHealthBar(frame)
 			end
 		end

@@ -1129,6 +1129,14 @@ local function loadGeneralOptions()
 								hidden = hideAdvancedOption,
 								arg = "castColors.finished",
 							},
+							interrupted = {
+								order = 4,
+								type = "color",
+								name = L["Cast interrupted"],
+								desc = L["Color used when a cast is interrupted either by the caster themselves or by another unit."],
+								hidden = hideAdvancedOption,
+								arg = "castColors.interrupted",
+							},
 						},
 					},
 					classColors = {

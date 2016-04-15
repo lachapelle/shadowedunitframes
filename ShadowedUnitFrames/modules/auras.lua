@@ -178,10 +178,10 @@ end
 -- Updates the X seconds left on aura tooltip while it's shown
 local function updateTooltip(self)
 	if( GameTooltip:IsOwned(self) ) then
-		if self.filter == "HELPFUL" then
-			GameTooltip:SetUnitBuff(self.unit, self.auraID)
+		if self.filter == "HELPFUL" or self.filter == "HELPFUL|RAID" then
+			GameTooltip:SetUnitBuff(self.unit, self.auraID, self.filter == "HELPFUL|RAID")
 		else
-			GameTooltip:SetUnitDebuff(self.unit, self.auraID)
+			GameTooltip:SetUnitDebuff(self.unit, self.auraID, self.filter == "HARMFUL|RAID")
 		end
 	end
 end
@@ -194,10 +194,10 @@ local function showTooltip(self)
 		GameTooltip:SetInventoryItem("player", self.auraID)
 		self:SetScript("OnUpdate", nil)
 	else
-		if self.filter == "HELPFUL" then
-			GameTooltip:SetUnitBuff(self.unit, self.auraID)
+		if self.filter == "HELPFUL" or self.filter == "HELPFUL|RAID" then
+			GameTooltip:SetUnitBuff(self.unit, self.auraID, self.filter == "HELPFUL|RAID")
 		else
-			GameTooltip:SetUnitDebuff(self.unit, self.auraID)
+			GameTooltip:SetUnitDebuff(self.unit, self.auraID, self.filter == "HARMFUL|RAID")
 		end
 		self:SetScript("OnUpdate", updateTooltip)
 	end
@@ -214,7 +214,7 @@ local function cancelBuff(self)
 	if( self.filter == "TEMP" ) then
 		CancelItemTempEnchantment(self.auraID - 15)
 	elseif UnitIsUnit(self.unit,"player") then
-		CancelPlayerBuff(UnitBuff("player",self.auraID))
+		CancelPlayerBuff(UnitBuff("player",self.auraID, self.filter == "HELPFUL|RAID"))
 	end
 end
 
@@ -489,7 +489,7 @@ local function scan(parent, frame, type, config, filter)
 		if filter == "HARMFUL" or filter == "HARMFUL|RAID" then
 			name, rank, texture, count, auraType, duration, endTime = UnitDebuff(frame.parent.unit, index, filter == "HARMFUL|RAID")
 		else
-			name, rank, texture, count, duration, endTime = UnitBuff(frame.parent.unit, index, filter)
+			name, rank, texture, count, duration, endTime = UnitBuff(frame.parent.unit, index, filter == "HELPFUL|RAID")
 		end
 		if( not name ) then break end
 		

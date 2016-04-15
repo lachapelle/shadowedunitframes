@@ -4067,11 +4067,15 @@ local function loadFilterOptions()
 		hasBlacklist = true
 		hasWhitelist = true
 	
-		for k,_ in pairs(filterMap) do
-			filtermap[k] = nil
+		if #filterMap > 0 then
+			for k,_ in pairs(filterMap) do
+				filtermap[k] = nil
+			end
 		end
-		for k,_ in pairs(spellMap) do
-			spellMap[k] = nil
+		if #spellMap > 0 then
+			for k,_ in pairs(spellMap) do
+				spellMap[k] = nil
+			end
 		end
 		
 		options.args.filter.args.filters.args.whitelists = buildList("whitelists")

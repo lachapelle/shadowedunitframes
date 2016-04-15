@@ -135,7 +135,11 @@ local function updateHealthBar(frame)
 	local time = GetTime()
 	local healed = select(2, HealComm:UnitIncomingHealGet(frame.unit, GetTime())) or 0
     if playerIsCasting then
-		healed = healed + playerHeals
+		for i=1, select("#", playerTarget) do
+			if( frame.unit and select(i, playerTarget) == unitFullName(frame.unit) ) then
+				healed = healed + playerHeals
+			end
+		end
     end
 	-- Update any tags that are using HC data
 	IncHeal:UpdateTags(frame, healed)

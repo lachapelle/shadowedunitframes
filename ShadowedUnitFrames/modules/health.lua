@@ -52,7 +52,7 @@ end
 
 local function callback(aggro, name, ...)
 	for _,frame in pairs(ShadowUF.Units.unitFrames) do
-		if UnitName(frame.unit) and UnitIsPlayer(frame.unit) then
+		if frame.unit and UnitName(frame.unit) == name and UnitIsPlayer(frame.unit) then
 			Health:UpdateColor(frame)
 		end
 	end

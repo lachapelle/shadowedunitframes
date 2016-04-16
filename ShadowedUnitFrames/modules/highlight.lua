@@ -24,7 +24,7 @@ end
 
 local function callback(aggro, name, ...)
 	for _,frame in pairs(ShadowUF.Units.unitFrames) do
-		if UnitName(frame.unit) == name and UnitIsPlayer(frame.unit) then
+		if frame.unit and UnitName(frame.unit) == name and UnitIsPlayer(frame.unit) then
 			Highlight:UpdateThreat(frame)
 		end
 	end

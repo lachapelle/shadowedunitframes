@@ -6,7 +6,9 @@ local L = ShadowUF.L
 
 ShadowUF.Tags = Tags
 ShadowUF.Tags.banzai = LibStub("LibBanzai-2.0")
-ShadowUF.Tags.druidlib = LibStub("LibDruidMana-1.0")
+if( select(2, UnitClass("player")) == "DRUID" ) then
+	ShadowUF.Tags.druidlib = LibStub("LibDruidMana-1.0")
+end
 
 function Banzai:EnableTag(frame)
 	frame.hasBTag = true

@@ -6,6 +6,7 @@ local L = ShadowUF.L
 
 ShadowUF.Tags = Tags
 ShadowUF.Tags.banzai = LibStub("LibBanzai-2.0")
+ShadowUF.Tags.druidlib = LibStub("LibDruidMana-1.0")
 
 function Banzai:EnableTag(frame)
 	frame.hasBTag = true
@@ -302,7 +303,7 @@ end})
 
 -- Going to have to start using an env wrapper for tags I think
 local Druid = {}
-Druid.CatForm, Druid.Shapeshift = GetSpellInfo(768)
+Druid.CatForm = GetSpellInfo(768)
 Druid.MoonkinForm = GetSpellInfo(24858)
 Druid.TravelForm = GetSpellInfo(783)
 Druid.BearForm = GetSpellInfo(5487)
@@ -321,40 +322,52 @@ Tags.defaultTags = {
 		if( select(2, UnitClass(unit)) ~= "DRUID" ) then return nil end
 		
 		local Druid = ShadowUF.Druid
-		if( UnitAura(unit, Druid.CatForm, Druid.Shapeshift) ) then
-			return ShadowUF.L["C"]
-		elseif( UnitAura(unit, Druid.TreeForm, Druid.Shapeshift) ) then
-			return ShadowUF.L["T"]
-		elseif( UnitAura(unit, Druid.MoonkinForm, Druid.Shapeshift) ) then
-			return ShadowUF.L["M"]
-		elseif( UnitAura(unit, Druid.DireBearForm, Druid.Shapeshift) or UnitAura(unit, Druid.BearForm, Druid.Shapeshift) ) then
-			return ShadowUF.L["B"]
-		elseif( UnitAura(unit, Druid.SwiftFlightForm, Druid.Shapeshift) or UnitAura(unit, Druid.FlightForm, Druid.Shapeshift) ) then
-			return ShadowUF.L["F"]
-		elseif( UnitAura(unit, Druid.TravelForm, Druid.Shapeshift) ) then
-			return ShadowUF.L["T"]
-		elseif( UnitAura(unit, Druid.AquaticForm, Druid.Shapeshift) ) then
-			return ShadowUF.L["A"]
+		local count = 1
+		local buffName
+		while UnitBuff(unit, count) do
+			buffName = UnitBuff(unit, count)
+			if( buffName == Druid.CatForm ) then
+				return ShadowUF.L["C"]
+			elseif( buffName == Druid.TreeForm ) then
+				return ShadowUF.L["T"]
+			elseif( buffName ==  Druid.MoonkinForm ) then
+				return ShadowUF.L["M"]
+			elseif( buffName ==  Druid.DireBearForm or buffName == Druid.BearForm ) then
+				return ShadowUF.L["B"]
+			elseif( buffName ==  Druid.SwiftFlightForm or buffName == Druid.FlightForm ) then
+				return ShadowUF.L["F"]
+			elseif( buffName ==  Druid.TravelForm ) then
+				return ShadowUF.L["T"]
+			elseif( buffName ==  Druid.AquaticForm ) then
+				return ShadowUF.L["A"]
+			end
+			count = count + 1
 		end
 	end]],
 	["druidform"] = [[function(unit, unitOwner)
 		if( select(2, UnitClass(unit)) ~= "DRUID" ) then return nil end
 		
 		local Druid = ShadowUF.Druid
-		if( UnitAura(unit, Druid.CatForm, Druid.Shapeshift) ) then
-			return ShadowUF.L["Cat"]
-		elseif( UnitAura(unit, Druid.TreeForm, Druid.Shapeshift) ) then
-			return ShadowUF.L["Tree"]
-		elseif( UnitAura(unit, Druid.MoonkinForm, Druid.Shapeshift) ) then
-			return ShadowUF.L["Moonkin"]
-		elseif( UnitAura(unit, Druid.DireBearForm, Druid.Shapeshift) or UnitAura(unit, Druid.BearForm, Druid.Shapeshift) ) then
-			return ShadowUF.L["Bear"]
-		elseif( UnitAura(unit, Druid.SwiftFlightForm, Druid.Shapeshift) or UnitAura(unit, Druid.FlightForm, Druid.Shapeshift) ) then
-			return ShadowUF.L["Flight"]
-		elseif( UnitAura(unit, Druid.TravelForm, Druid.Shapeshift) ) then
-			return ShadowUF.L["Travel"]
-		elseif( UnitAura(unit, Druid.AquaticForm, Druid.Shapeshift) ) then
-			return ShadowUF.L["Aquatic"]
+		local count = 1
+		local buffName
+		while UnitBuff(unit, count) do
+			buffName = UnitBuff(unit, count)
+			if( buffName == Druid.CatForm ) then
+				return ShadowUF.L["Cat"]
+			elseif( buffName == Druid.TreeForm ) then
+				return ShadowUF.L["Tree"]
+			elseif( buffName ==  Druid.MoonkinForm ) then
+				return ShadowUF.L["Moonkin"]
+			elseif( buffName ==  Druid.DireBearForm or buffName == Druid.BearForm ) then
+				return ShadowUF.L["Bear"]
+			elseif( buffName ==  Druid.SwiftFlightForm or buffName == Druid.FlightForm ) then
+				return ShadowUF.L["Flight"]
+			elseif( buffName ==  Druid.TravelForm ) then
+				return ShadowUF.L["Travel"]
+			elseif( buffName ==  Druid.AquaticForm ) then
+				return ShadowUF.L["Aquatic"]
+			end
+			count = count + 1
 		end
 	end]],
 	["guild"] = [[function(unit, unitOwner)
@@ -714,23 +727,23 @@ Tags.defaultTags = {
 	end]],
 	["druid:curpp"] = [[function(unit, unitOwner)
 		if( select(2, UnitClass(unit)) ~= "DRUID" ) then return nil end
-		local powerType = UnitManaType(unit)
+		local powerType = UnitPowerType(unit)
 		if( powerType ~= 1 and powerType ~= 3 ) then return nil end
-		return ShadowUF:FormatLargeNumber(UnitMana(unit, 0))
+		return ShadowUF:FormatLargeNumber(ShadowUF.Tags.druidlib:GetCurrentMana())
 	end]],
 	["druid:abscurpp"] = [[function(unit, unitOwner)
 		if( select(2, UnitClass(unit)) ~= "DRUID" ) then return nil end
-		local powerType = UnitManaType(unit)
+		local powerType = UnitPowerType(unit)
 		if( powerType ~= 1 and powerType ~= 3 ) then return nil end
-		return UnitMana(unit, 0)
+		return ShadowUF.Tags.druidlib:GetCurrentMana()
 	end]],
 	["druid:curmaxpp"] = [[function(unit, unitOwner)
 		if( select(2, UnitClass(unit)) ~= "DRUID" ) then return nil end
-		local powerType = UnitManaType(unit)
+		local powerType = UnitPowerType(unit)
 		if( powerType ~= 1 and powerType ~= 3 ) then return nil end
 		
-		local maxPower = UnitManaMax(unit, 0)
-		local power = UnitMana(unit, 0)
+		local maxPower = ShadowUF.Tags.druidlib:GetMaximumMana()
+		local power = ShadowUF.Tags.druidlib:GetCurrentMana()
 		if( UnitIsDeadOrGhost(unit) ) then
 			return string.format("0/%s", ShadowUF:FormatLargeNumber(maxPower))
 		elseif( maxPower == 0 and power == 0 ) then
@@ -741,9 +754,9 @@ Tags.defaultTags = {
 	end]],
 	["druid:absolutepp"] = [[function(unit, unitOwner)
 		if( select(2, UnitClass(unit)) ~= "DRUID" ) then return nil end
-		local powerType = UnitManaType(unit)
+		local powerType = UnitPowerType(unit)
 		if( powerType ~= 1 and powerType ~= 3 ) then return nil end
-		return UnitMana(unit, 0)
+		return ShadowUF.Tags.druidlib:GetCurrentMana()
 	end]],
 	["abs:incheal"] = [[function(unit, unitOwner, fontString)
 		return fontString.incoming and string.format("%d", fontString.incoming)

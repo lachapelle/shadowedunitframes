@@ -1,12 +1,10 @@
 local Auras = {}
-local stealableColor = {r = 1, g = 1, b = 1}
-local playerUnits = {player = true, pet = true}
 local mainHand, offHand = {time = 0}, {time = 0}
 local tempEnchantScan
 ShadowUF:RegisterModule(Auras, "auras", ShadowUF.L["Auras"])
 
 function Auras:OnEnable(frame)
-	frame.auras = frame.auras or {}
+	frame.auras = frame.auras or CreateFrame("Frame", frame:GetName().."Auras", frame)
 	
 	frame:RegisterNormalEvent("PLAYER_ENTERING_WORLD", self, "Update")
 	frame:RegisterUnitEvent("UNIT_AURA", self, "Update")
@@ -517,6 +515,8 @@ local function scan(parent, frame, type, config, filter)
 			
 			-- Show the cooldown ring
 			if( not ShadowUF.db.profile.auras.disableCooldown and duration and duration > 0 and config.selfTimers ) then
+				--ChatFrame1:AddMessage(name..": "..endTime)
+				--tempData.startTime, timeLeft / 1000
 				button.cooldown:SetCooldown(GetTime() + endTime - duration, duration)
 				button.cooldown:Show()
 			else
@@ -595,6 +595,52 @@ end
 
 Auras.anchorGroupToGroup = anchorGroupToGroup
 
+local function RefreshTimers(parent, frame, type, config, filter)
+	if( frame.totalAuras >= frame.maxAuras or not config.enabled ) then return end
+
+	local name, duration, endTime
+	for _,button in pairs(frame.buttons) do
+		if filter == "HARMFUL" or filter == "HARMFUL|RAID" then
+			name, _, _, _, _, duration, endTime = UnitDebuff(frame.parent.unit, button.auraID, filter == "HARMFUL|RAID")
+		else
+			name, _, _, _, duration, endTime = UnitBuff(frame.parent.unit, button.auraID, filter == "HELPFUL|RAID")
+		end
+		
+		if( ( not config.player ) and ( not parent.whitelist[type] and not parent.blacklist[type] or parent.whitelist[type] and parent.whitelist[name] or parent.blacklist[type] and not parent.blacklist[name] ) ) then
+			
+			-- Show the cooldown ring
+			if( not ShadowUF.db.profile.auras.disableCooldown and duration and duration > 0 and config.selfTimers ) then
+				button.cooldown:SetCooldown(GetTime() + endTime - duration, duration)
+				button.cooldown:Show()
+			else
+				button.cooldown:Hide()
+			end
+
+		end
+	end
+end
+
+local function TimerUpdate(self, elapsed)
+	self.TimeSinceLastUpdate = (self.TimeSinceLastUpdate or 0) + elapsed
+	if self.TimeSinceLastUpdate > 0.5 then
+		self.TimeSinceLastUpdate = 0
+		local frame = self:GetParent()
+		local config = ShadowUF.db.profile.units[frame.unitType].auras
+		if( frame.auras.anchor ) then
+			RefreshTimers(frame.auras, frame.auras.anchor, frame.auras.primary, config[frame.auras.primary], frame.auras[frame.auras.primary].filter)
+			RefreshTimers(frame.auras, frame.auras.anchor, frame.auras.secondary, config[frame.auras.secondary], frame.auras[frame.auras.secondary].filter)
+		else
+			if( config.buffs.enabled ) then
+				RefreshTimers(frame.auras, frame.auras.buffs, "buffs", config.buffs, frame.auras.buffs.filter)
+			end
+
+			if( config.debuffs.enabled ) then
+				RefreshTimers(frame.auras, frame.auras.debuffs, "debuffs", config.debuffs, frame.auras.debuffs.filter)
+			end
+		end
+	end
+end
+
 -- Do an update and figure out what we need to scan
 function Auras:Update(frame)
 	local config = ShadowUF.db.profile.units[frame.unitType].auras
@@ -616,6 +662,13 @@ function Auras:Update(frame)
 		
 		if( frame.auras.anchorAurasOn ) then
 			anchorGroupToGroup(frame, config[frame.auras.anchorAurasOn.type], frame.auras.anchorAurasOn, config[frame.auras.anchorAurasChild.type], frame.auras.anchorAurasChild)
+		end
+	end
+	if not ShadowUF.fakeUnits[frame.unitRealType] then
+		if UnitIsUnit(frame.unitRealType,"player") then
+			frame.auras:SetScript("OnUpdate", TimerUpdate)
+		else
+			frame.auras:SetScript("OnUpdate", nil)
 		end
 	end
 end

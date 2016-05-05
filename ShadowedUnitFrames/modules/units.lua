@@ -334,7 +334,7 @@ end
 local function ShowMenu(self)
 	if( UnitIsUnit(self.unit, "player") ) then
 		ToggleDropDownMenu(1, nil, PlayerFrameDropDown, "cursor")
-	elseif( self.unit == "pet" or self.unit == "vehicle" ) then
+	elseif( self.unit == "pet" ) then
 		ToggleDropDownMenu(1, nil, PetFrameDropDown, "cursor")
 	elseif( self.unit == "target" ) then
 		ToggleDropDownMenu(1, nil, TargetFrameDropDown, "cursor")

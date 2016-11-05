@@ -1548,7 +1548,9 @@ local function loadUnitOptions()
 
 			if( value ) then
 				if( unit == "global" ) then
-					table.wipe(savedTagTexts)
+					for k,_ in pairs(savedTagTexts) do
+						savedTagTexts[k] = nil
+					end
 					
 					-- Set special tag texts based on the unit, so targettarget won't get a tag that will cause errors
 					local tagGroup = ShadowUF.Tags.defaultCategories[tag]
@@ -1576,7 +1578,9 @@ local function loadUnitOptions()
 			-- Removing a tag from global config, need to make sure we can do it
 			-- Hack, clean up later
 			elseif( unit == "global" ) then
-				table.wipe(savedTagTexts)
+				for k,_ in pairs(savedTagTexts) do
+					savedTagTexts[k] = nil
+				end
 				for unit in pairs(modifyUnits) do
 					if( not ShadowUF.Tags.unitBlacklist[tagGroup] or not string.match(unit, ShadowUF.Tags.unitBlacklist[tagGroup]) ) then
 						if( not ShadowUF.Tags.unitRestrictions[tag] or ShadowUF.Tags.unitRestrictions[tag] == unit ) then

@@ -289,7 +289,7 @@ function Layout:SetupFrame(frame, config)
 	frame:SetBackdropBorderColor(backdrop.borderColor.r, backdrop.borderColor.g, backdrop.borderColor.b, backdrop.borderColor.a)
 	
 	-- Prevent these from updating while in combat to prevent tainting
-	if( not UnitAffectingCombat("player") ) then
+	if( not UnitAffectingCombat("player") or not ShadowUF.Initialized ) then
 		frame:SetHeight(config.height)
 		frame:SetWidth(config.width)
 		frame:SetScale(config.scale)

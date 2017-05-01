@@ -72,6 +72,15 @@ function ShadowUF:OnInitialize()
 		self:CheckUpgrade()
 	end
 	
+	if MobHealth3Frame then
+		self.Tags.UnitHealth = function(unitID)
+			return select(1, MobHealth3:GetUnitHealth(unitID))
+		end
+		self.Tags.UnitHealthMax = function(unitID)
+			return select(2, MobHealth3:GetUnitHealth(unitID))
+		end
+	end
+	
 	self.db.profile.revision = self.dbRevision
 	self:FireModuleEvent("OnInitialize")
 	self:HideBlizzardFrames()
@@ -79,6 +88,7 @@ function ShadowUF:OnInitialize()
 	self:LoadUnits()
 	self.modules.movers:Update()
 	self.Initialized = true
+	
 end
 
 function ShadowUF:CheckUpgrade()

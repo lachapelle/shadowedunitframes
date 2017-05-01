@@ -3,6 +3,8 @@ local Tags = {afkStatus = {}, offlineStatus = {}, customEvents = {}}
 local tagPool, functionPool, temp, regFontStrings, frequentUpdates, frequencyCache = {}, {}, {}, {}, {}, {}
 local Banzai = {}
 local L = ShadowUF.L
+Tags.UnitHealth = UnitHealth
+Tags.UnitHealthMax = UnitHealthMax
 
 ShadowUF.Tags = Tags
 ShadowUF.Tags.banzai = LibStub("LibBanzai-2.0")
@@ -460,7 +462,7 @@ Tags.defaultTags = {
 			return ShadowUF.L["Offline"]
 		end
 
-		return ShadowUF:FormatLargeNumber(UnitHealth(unit))
+		return ShadowUF:FormatLargeNumber(ShadowUF.Tags.UnitHealth(unit))
 	end]],
 	["colorname"] = [[function(unit, unitOwner)
 		local color = ShadowUF:GetClassColor(unitOwner)
@@ -489,7 +491,7 @@ Tags.defaultTags = {
 			return ShadowUF.L["Offline"]
 		end
 		
-		return string.format("%s/%s", ShadowUF:FormatLargeNumber(UnitHealth(unit)), ShadowUF:FormatLargeNumber(UnitHealthMax(unit)))
+		return string.format("%s/%s", ShadowUF:FormatLargeNumber(ShadowUF.Tags.UnitHealth(unit)), ShadowUF:FormatLargeNumber(ShadowUF.Tags.UnitHealthMax(unit)))
 	end]],
 	["smart:curmaxhp"] = [[function(unit, unitOwner)
 		if( UnitIsDead(unit) ) then
@@ -500,7 +502,7 @@ Tags.defaultTags = {
 			return ShadowUF.L["Offline"]
 		end
 		
-		return string.format("%s/%s", ShadowUF:SmartFormatNumber(UnitHealth(unit)), ShadowUF:SmartFormatNumber(UnitHealthMax(unit)))
+		return string.format("%s/%s", ShadowUF:SmartFormatNumber(ShadowUF.Tags.UnitHealth(unit)), ShadowUF:SmartFormatNumber(ShadowUF.Tags.UnitHealthMax(unit)))
 	end]],
 	["absolutehp"] = [[function(unit, unitOwner)
 		if( UnitIsDead(unit) ) then
@@ -511,7 +513,7 @@ Tags.defaultTags = {
 			return ShadowUF.L["Offline"]
 		end
 		
-		return string.format("%s/%s", UnitHealth(unit), UnitHealthMax(unit))
+		return string.format("%s/%s", ShadowUF.Tags.UnitHealth(unit), ShadowUF.Tags.UnitHealthMax(unit))
 	end]],
 	["abscurhp"] = [[function(unit, unitOwner)
 		if( UnitIsDead(unit) ) then
@@ -522,9 +524,9 @@ Tags.defaultTags = {
 			return ShadowUF.L["Offline"]
 		end
 		
-		return UnitHealth(unit)
+		return ShadowUF.Tags.UnitHealth(unit)
 	end]],
-	["absmaxhp"] = [[function(unit, unitOwner) return UnitHealthMax(unit) end]],
+	["absmaxhp"] = [[function(unit, unitOwner) return ShadowUF.Tags.UnitHealthMax(unit) end]],
 	["abscurpp"] = [[function(unit, unitOwner)
 		if( UnitManaMax(unit) <= 0 ) then
 			return nil
@@ -593,7 +595,7 @@ Tags.defaultTags = {
 		local level = UnitLevel(unit)
 		return level > 0 and level or UnitClassification(unit) ~= "worldboss" and "??" or nil
 	end]],
-	["maxhp"] = [[function(unit, unitOwner) return ShadowUF:FormatLargeNumber(UnitHealthMax(unit)) end]],
+	["maxhp"] = [[function(unit, unitOwner) return ShadowUF:FormatLargeNumber(ShadowUF.Tags.UnitHealthMax(unit)) end]],
 	["maxpp"] = [[function(unit, unitOwner)
 		local power = UnitManaMax(unit)
 		if( power <= 0 ) then
@@ -613,7 +615,7 @@ Tags.defaultTags = {
 			return ShadowUF.L["Offline"]
 		end
 
-		local missing = UnitHealthMax(unit) - UnitHealth(unit)
+		local missing = ShadowUF.Tags.UnitHealthMax(unit) - ShadowUF.Tags.UnitHealth(unit)
 		if( missing <= 0 ) then return nil end
 		return "-" .. ShadowUF:FormatLargeNumber(missing) 
 	end]],
@@ -639,12 +641,12 @@ Tags.defaultTags = {
 		return server ~= "" and server or nil
 	end]],
 	["perhp"] = [[function(unit, unitOwner)
-		local max = UnitHealthMax(unit)
+		local max = ShadowUF.Tags.UnitHealthMax(unit)
 		if( max <= 0 or UnitIsDead(unit) or UnitIsGhost(unit) or not UnitIsConnected(unit) ) then
 			return "0%"
 		end
 		
-		return math.floor(UnitHealth(unit) / max * 100 + 0.5) .. "%"
+		return math.floor(ShadowUF.Tags.UnitHealth(unit) / max * 100 + 0.5) .. "%"
 	end]],
 	["perpp"] = [[function(unit, unitOwner)
 		local maxPower = UnitManaMax(unit)
@@ -692,7 +694,7 @@ Tags.defaultTags = {
 			end
 		end
 	end]],
-	["dechp"] = [[function(unit, unitOwner) return string.format("%.1f%%", (UnitHealth(unit) / UnitHealthMax(unit)) * 100) end]],
+	["dechp"] = [[function(unit, unitOwner) return string.format("%.1f%%", (ShadowUF.Tags.UnitHealth(unit) / ShadowUF.Tags.UnitHealthMax(unit)) * 100) end]],
 	["classification"] = [[function(unit, unitOwner)
 		local classif = UnitClassification(unit)
 		if( classif == "rare" ) then

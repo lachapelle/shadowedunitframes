@@ -70,7 +70,7 @@ local positionData = setmetatable({}, {
 	end,
 })
 
-local function positionButton(id,  group, config)
+local function positionButton(id, group, config)
 	local position = positionData[group.forcedAnchorPoint or config.anchorPoint] 
 	local button = group.buttons[id]
 	button.isAuraAnchor = nil
@@ -176,7 +176,9 @@ end
 -- Updates the X seconds left on aura tooltip while it's shown
 local function updateTooltip(self)
 	if( GameTooltip:IsOwned(self) ) then
-		if self.filter == "HELPFUL" or self.filter == "HELPFUL|RAID" then
+		if self.filter == "TEMP" then
+			GameTooltip:SetInventoryItem("player", self.auraID)
+		elseif self.filter == "HELPFUL" or self.filter == "HELPFUL|RAID" then
 			GameTooltip:SetUnitBuff(self.unit, self.auraID, self.filter == "HELPFUL|RAID")
 		else
 			GameTooltip:SetUnitDebuff(self.unit, self.auraID, self.filter == "HARMFUL|RAID")
@@ -190,15 +192,14 @@ local function showTooltip(self)
 	GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
 	if( self.filter == "TEMP" ) then
 		GameTooltip:SetInventoryItem("player", self.auraID)
-		self:SetScript("OnUpdate", nil)
 	else
 		if self.filter == "HELPFUL" or self.filter == "HELPFUL|RAID" then
 			GameTooltip:SetUnitBuff(self.unit, self.auraID, self.filter == "HELPFUL|RAID")
 		else
 			GameTooltip:SetUnitDebuff(self.unit, self.auraID, self.filter == "HARMFUL|RAID")
 		end
-		self:SetScript("OnUpdate", updateTooltip)
 	end
+	self:SetScript("OnUpdate", updateTooltip)
 end
 
 local function hideTooltip(self)
@@ -231,7 +232,7 @@ local function updateButton(id, group, config)
 		button.cooldown:SetAllPoints(button)
 		button.cooldown:SetReverse(true)
 		button.cooldown:SetFrameLevel(7)
-		button.cooldown:Hide()			
+		button.cooldown:Hide()
 		
 		button.stack = button:CreateFontString(nil, "OVERLAY")
 		button.stack:SetFont("Interface\\AddOns\\ShadowedUnitFrames\\media\\fonts\\Myriad Condensed Web.ttf", 10, "OUTLINE")
@@ -288,7 +289,8 @@ local function updateGroup(self, type, config, reverseConfig)
 	
 	group.maxAuras = config.perRow * config.maxRows
 	group.totalAuras = 0
-	group.temporaryEnchants = 0
+	local hasMain, _, _, hasOff = GetWeaponEnchantInfo()
+	group.temporaryEnchants = (hasMain and 1 or 0) + (hasOff and 1 or 0)
 	group.type = type
 	group.parent = self
 	group.anchorTo = self
@@ -379,7 +381,7 @@ local function updateTemporaryEnchant(frame, slot, tempData, hasEnchant, timeLef
 	-- Any sort of enchant takes more than 0.750 seconds to cast so it's impossible for the user to have two
 	-- temporary enchants with that little difference, as totems don't really give pulsing auras anymore.
 	if( tempData.has and ( timeLeft < tempData.time and ( tempData.time - timeLeft ) < 750 ) and charges == tempData.charges ) then return false end
-	
+
 	-- Some trickys magic, we can't get the start time of temporary enchants easily.
 	-- So will save the first time we find when a new enchant is added
 	if( timeLeft > tempData.time or not tempData.has ) then
@@ -396,7 +398,7 @@ local function updateTemporaryEnchant(frame, slot, tempData, hasEnchant, timeLef
 	if( #(frame.buttons) < frame.temporaryEnchants ) then
 		updateButton(frame.temporaryEnchants, frame, config)
 	end
-				
+
 	local button = frame.buttons[frame.temporaryEnchants]
 	
 	-- Purple border
@@ -406,6 +408,8 @@ local function updateTemporaryEnchant(frame, slot, tempData, hasEnchant, timeLef
 	if( not ShadowUF.db.profile.auras.disableCooldown ) then
 		button.cooldown:SetCooldown(tempData.startTime, timeLeft / 1000)
 		button.cooldown:Show()
+	else
+		button.cooldown:Hide()
 	end
 
 	-- Enlarge our own auras
@@ -441,9 +445,13 @@ tempEnchantScan = function(self, elapsed)
 	timeElapsed = timeElapsed - 0.50
 
 	local hasMain, mainTimeLeft, mainCharges, hasOff, offTimeLeft, offCharges = GetWeaponEnchantInfo()
+	local numTempEnchants = ((hasMain and 1 or 0) + (hasOff and 1 or 0))
 	self.temporaryEnchants = 0
 	
 	if( hasMain ) then
+		if( self.lastTemporary ~= numTempEnchants ) then
+			mainHand.has = nil
+		end
 		self.temporaryEnchants = self.temporaryEnchants + 1
 		updateTemporaryEnchant(self, 16, mainHand, hasMain, mainTimeLeft or 0, mainCharges)
 		mainHand.time = mainTimeLeft or 0
@@ -452,6 +460,9 @@ tempEnchantScan = function(self, elapsed)
 	mainHand.has = hasMain
 	
 	if( hasOff and self.temporaryEnchants < self.maxAuras ) then
+		if( self.lastTemporary ~= numTempEnchants ) then
+			offHand.has = nil
+		end
 		self.temporaryEnchants = self.temporaryEnchants + 1
 		updateTemporaryEnchant(self, 17, offHand, hasOff, offTimeLeft or 0, offCharges)
 		offHand.time = offTimeLeft or 0
@@ -487,13 +498,13 @@ local function scan(parent, frame, type, config, filter)
 
 	local isFriendly = UnitIsFriend(frame.parent.unit, "player")
 	local index = 0
-	local name, rank, texture, count, auraType, duration, endTime
+	local name, rank, texture, count, auraType, duration, timeLeft
 	while( true ) do
 		index = index + 1 
 		if filter == "HARMFUL" or filter == "HARMFUL|RAID" then
-			name, rank, texture, count, auraType, duration, endTime = UnitDebuff(frame.parent.unit, index, filter == "HARMFUL|RAID")
+			name, rank, texture, count, auraType, duration, timeLeft = UnitDebuff(frame.parent.unit, index, filter == "HARMFUL|RAID")
 		else
-			name, rank, texture, count, duration, endTime = UnitBuff(frame.parent.unit, index, filter == "HELPFUL|RAID")
+			name, rank, texture, count, duration, timeLeft = UnitBuff(frame.parent.unit, index, filter == "HELPFUL|RAID")
 		end
 		if( not name ) then break end
 		
@@ -515,9 +526,7 @@ local function scan(parent, frame, type, config, filter)
 			
 			-- Show the cooldown ring
 			if( not ShadowUF.db.profile.auras.disableCooldown and duration and duration > 0 and config.selfTimers ) then
-				--ChatFrame1:AddMessage(name..": "..endTime)
-				--tempData.startTime, timeLeft / 1000
-				button.cooldown:SetCooldown(GetTime() + endTime - duration, duration)
+				button.cooldown:SetCooldown(GetTime() + timeLeft - duration, duration)
 				button.cooldown:Show()
 			else
 				button.cooldown:Hide()
@@ -606,7 +615,7 @@ local function RefreshTimers(parent, frame, type, config, filter)
 			name, _, _, _, duration, endTime = UnitBuff(frame.parent.unit, button.auraID, filter == "HELPFUL|RAID")
 		end
 		
-		if( ( not config.player ) and ( not parent.whitelist[type] and not parent.blacklist[type] or parent.whitelist[type] and parent.whitelist[name] or parent.blacklist[type] and not parent.blacklist[name] ) ) then
+		if( (button.filter ~= "TEMP") and ( not config.player ) and ( not parent.whitelist[type] and not parent.blacklist[type] or parent.whitelist[type] and parent.whitelist[name] or parent.blacklist[type] and not parent.blacklist[name] ) ) then
 			
 			-- Show the cooldown ring
 			if( not ShadowUF.db.profile.auras.disableCooldown and duration and duration > 0 and config.selfTimers ) then

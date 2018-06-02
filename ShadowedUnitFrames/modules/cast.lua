@@ -313,9 +313,9 @@ function Cast:EventDelayChannel(frame)
 end
 
 -- Cast finished
-function Cast:EventStopCast(frame, event, unit, spell)
+function Cast:EventStopCast(frame, event)
 	local cast = frame.castBar.bar
-	if( cast.spellName ~= spell or ( event == "UNIT_SPELLCAST_FAILED" and cast.isChannelled ) ) then return end
+	if( cast.spellName == nil or ( event == "UNIT_SPELLCAST_FAILED" and cast.isChannelled ) ) then return end
 	if( cast.time.enabled ) then
 		cast.time:SetText("0.0")
 	end

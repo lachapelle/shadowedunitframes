@@ -911,7 +911,7 @@ function Units:LoadChildUnit(parent, type, id)
 	frame.unitType = type
 	frame.parent = parent
 	frame.isChildUnit = true
-	frame.hasStateWatch = type == "partypet"
+--	frame.hasStateWatch = type == "partypet"
 	frame:SetFrameStrata("LOW")
 	frame:SetAttribute("useparent-unit", true)
 	frame:SetAttribute("unitsuffix", string.match(type, "pet$") and "pet" or "target")

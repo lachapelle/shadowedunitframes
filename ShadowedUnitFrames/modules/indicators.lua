@@ -84,7 +84,7 @@ function Indicators:UpdateLeader(frame)
 	self:UpdateRole(frame)
 	if( not frame.indicators.leader or not frame.indicators.leader.enabled ) then return end
 
-	if( UnitIsPartyLeader(frame.unit) ) then
+	if( UnitIsPartyLeader(frame.unit) and (GetNumRaidMembers() >=1 or GetNumPartyMembers() >= 1 ) ) then
 		frame.indicators.leader:Show()
 	else
 		frame.indicators.leader:Hide()

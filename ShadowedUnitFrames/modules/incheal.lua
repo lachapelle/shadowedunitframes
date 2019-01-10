@@ -164,7 +164,7 @@ local function updateHealthBar(frame)
 				end
 				
 				frame.incHeal:SetWidth(incWidth)
-				frame.incHeal:SetPoint("TOPLEFT", SUFUnitplayer, "TOPLEFT", frame.incHeal.healthX + healthWidth, frame.incHeal.healthY)
+				frame.incHeal:SetPoint("TOPLEFT", frame, "TOPLEFT", frame.incHeal.healthX + healthWidth, frame.incHeal.healthY)
 			end
 		else
 			frame.incHeal.total = nil

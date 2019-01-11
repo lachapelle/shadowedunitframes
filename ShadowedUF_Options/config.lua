@@ -3896,7 +3896,7 @@ local function loadFilterOptions()
 
 	-- Container table for a filter zone
 	local globalSettings = {}
-	local zoneList = {"none", "pvp", "party", "raid"}
+	local zoneList = {"none", "pvp", "party", "raid", "arena"}
 	local filterTable = {
 		order = function(info) return info[#(info)] == "global" and 1 or info[#(info)] == "none" and 2 or 3 end,
 		type = "group",

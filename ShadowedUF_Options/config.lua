@@ -681,7 +681,7 @@ local function loadGeneralOptions()
 									set(info, value)
 									ShadowUF.modules.movers:Update()
 								end,
-								disabled = function() return UnitAffectingCombat("player") end,
+								disabled = function() return ShadowUF.InCombatLockdown end,
 								arg = "locked",
 							},
 							sep = {
@@ -1304,6 +1304,7 @@ local function loadHideOptions()
 				type = "group",
 				name = L["Frames"],
 				inline = true,
+				disabled = function() return ShadowUF.InCombatLockdown end,
 				args = {
 					buffs = Config.hideTable,
 					cast = Config.hideTable,
@@ -2741,8 +2742,12 @@ local function loadUnitOptions()
 						hidden = false,
 						set = function(info, value)
 							setUnit(info, value)
+							if info[2] == "raid" then
+								ShadowUF.Units:ReloadHeader(info[2])
+							end
 							ShadowUF.modules.movers:Update()
 						end,
+						disabled = function() return ShadowUF.InCombatLockdown end,
 						args = {
 							scale = {
 								order = 0,
@@ -2776,6 +2781,7 @@ local function loadUnitOptions()
 						name = L["Anchor to another frame"],
 						set = setPosition,
 						get = getPosition,
+						disabled = function() return ShadowUF.InCombatLockdown end,
 						args = {
 							anchorPoint = {
 								order = 0.50,
@@ -2841,6 +2847,7 @@ local function loadUnitOptions()
 						name = L["Manual position"],
 						set = setPosition,
 						get = getPosition,
+						disabled = function() return ShadowUF.InCombatLockdown end,
 						args = {
 							point = {
 								order = 0,
@@ -3660,6 +3667,9 @@ local function loadUnitOptions()
 		end,
 		disabled = function(info)
 			local unit = info[#(info)]
+			if ShadowUF.InCombatLockdown then
+				return true
+			end
 			if( ShadowUF.Units.childUnits[unit] ) then
 				return not ShadowUF.db.profile.units[ShadowUF.Units.childUnits[unit]].enabled	
 			end
@@ -4949,6 +4959,7 @@ local function loadVisibilityOptions()
 				desc = getHelp,
 				tristate = true,
 				width = "double",
+				disabled = function() return ShadowUF.InCombatLockdown end,
 			},
 			sep = {
 				order = 0.5,

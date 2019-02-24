@@ -4,6 +4,7 @@
 
 --ShadowUF = select(2, ...)
 local L = ShadowUF.L
+local ACR = LibStub("AceConfigRegistry-3.0", true)
 ShadowUF.dbRevision = 1
 ShadowUF.playerUnit = "player"
 ShadowUF.enabledUnits = {}
@@ -72,23 +73,12 @@ function ShadowUF:OnInitialize()
 		self:CheckUpgrade()
 	end
 	
-	if MobHealth3Frame then
-		self.Tags.UnitHealth = function(unitID)
-			return select(1, MobHealth3:GetUnitHealth(unitID))
-		end
-		self.Tags.UnitHealthMax = function(unitID)
-			return select(2, MobHealth3:GetUnitHealth(unitID))
-		end
-	end
-	
 	self.db.profile.revision = self.dbRevision
 	self:FireModuleEvent("OnInitialize")
 	self:HideBlizzardFrames()
 	self.Layout:LoadSML()
 	self:LoadUnits()
 	self.modules.movers:Update()
-	self.Initialized = true
-	
 end
 
 function ShadowUF:CheckUpgrade()
@@ -519,9 +509,23 @@ end
 
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("PLAYER_LOGIN")
+frame:RegisterEvent("PLAYER_REGEN_DISABLED")
+frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 frame:SetScript("OnEvent", function(self, event, addon)
 	if( event == "PLAYER_LOGIN" ) then
 		ShadowUF:OnInitialize()
 		self:UnregisterEvent("PLAYER_LOGIN")
+	elseif event == "PLAYER_REGEN_DISABLED" then
+		ShadowUF.db.profile.locked = true
+		ShadowUF.InCombatLockdown = true
+		ShadowUF.modules.movers:Update()
+		if( ACR ) then
+			ACR:NotifyChange("ShadowedUF")
+		end
+	elseif event == "PLAYER_REGEN_ENABLED" then
+		ShadowUF.InCombatLockdown = nil
+		if( ACR ) then
+			ACR:NotifyChange("ShadowedUF")
+		end
 	end
 end)

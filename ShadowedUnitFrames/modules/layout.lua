@@ -97,6 +97,15 @@ function Layout:Reload(unit)
 		end
 	end
 	
+	for header in pairs(ShadowUF.Units.headerFrames) do
+		if( header.unitType and ( not unit or header.unitType == unit ) ) then
+			local config = ShadowUF.db.profile.units[header.unitType]
+			header:SetAttribute("style-height", config.height)
+			header:SetAttribute("style-width", config.width)
+			header:SetAttribute("style-scale", config.scale)
+		end
+	end
+		
 	ShadowUF:FireModuleEvent("OnLayoutReload", unit)
 end
 
@@ -222,7 +231,11 @@ function Layout:GetSplitRelativeAnchor(point, columnPoint)
 		return "TOPLEFT", "TOPRIGHT", 1, 0
 	-- Column is growing to the LEFT
 	elseif( columnPoint == "RIGHT" ) then
-		return "TOPRIGHT", "TOPLEFT", -1, 0
+		if point == "BOTTOM" then
+			return "BOTTOMRIGHT", "BOTTOMLEFT", -1, 0
+		else
+			return "TOPRIGHT", "TOPLEFT", -1, 0
+		end
 	-- Column is growing DOWN
 	elseif( columnPoint == "TOP" ) then
 		return "TOP" .. point, "BOTTOM" .. point, 0, -1
@@ -289,7 +302,7 @@ function Layout:SetupFrame(frame, config)
 	frame:SetBackdropBorderColor(backdrop.borderColor.r, backdrop.borderColor.g, backdrop.borderColor.b, backdrop.borderColor.a)
 	
 	-- Prevent these from updating while in combat to prevent tainting
-	if( not UnitAffectingCombat("player") or not ShadowUF.Initialized ) then
+	if( not UnitAffectingCombat("player") ) then
 		frame:SetHeight(config.height)
 		frame:SetWidth(config.width)
 		frame:SetScale(config.scale)

@@ -226,75 +226,6 @@ local function SetVisibility(self)
 	end
 end
 
--- Vehicles do not always return their data right away, a pure OnUpdate check seems to be the most accurate unfortunately
-local function checkVehicleData(self, elapsed)
-	self.timeElapsed = self.timeElapsed + elapsed
-	if( self.timeElapsed >= 0.50 ) then
-		self.timeElapsed = 0
-		self.dataAttempts = self.dataAttempts + 1
-		
-		-- Took too long to get vehicle data, or they are no longer in a vehicle
-		if( self.dataAttempts >= 6 or not UnitHasVehicleUI(self.unitOwner) ) then
-			self.timeElapsed = nil
-			self.dataAttempts = nil
-			self:SetScript("OnUpdate", nil)
-
-			self.inVehicle = false
-			self.unit = self.unitOwner
-			self:FullUpdate()
-			
-		-- Got data, stop checking and do a full frame update
-		elseif( UnitIsConnected(self.unit) or UnitHealthMax(self.unit) > 0 ) then
-			self.timeElapsed = nil
-			self.dataAttempts = nil
-			self:SetScript("OnUpdate", nil)
-			
-			self.unitGUID = UnitGUID(self.unit)
-			self:FullUpdate()
-		end
-	end
-end 
-
--- Check if a unit entered a vehicle
-function Units:CheckVehicleStatus(frame, event, unit)
-	if( event and frame.unitOwner ~= unit ) then return end
-		
-	-- Not in a vehicle yet, and they entered one that has a UI or they were in a vehicle but the GUID changed (vehicle -> vehicle)
-	if( ( not frame.inVehicle or frame.unitGUID ~= UnitGUID(frame.vehicleUnit) ) and UnitHasVehicleUI(frame.unitOwner) and not ShadowUF.db.profile.units[frame.unitType].disableVehicle ) then
-		
-		frame.inVehicle = true
-		frame.unit = frame.vehicleUnit
-
-		if( not UnitIsConnected(frame.unit) or UnitHealthMax(frame.unit) == 0 ) then
-			frame.timeElapsed = 0
-			frame.dataAttempts = 0
-			frame:SetScript("OnUpdate", checkVehicleData)
-		else
-			frame.unitGUID = UnitGUID(frame.unit)
-			frame:FullUpdate()
-		end
-				
-	-- Was in a vehicle, no longer has a UI
-	elseif( frame.inVehicle and ( not UnitHasVehicleUI(frame.unitOwner) or ShadowUF.db.profile.units[frame.unitType].disableVehicle ) ) then
-		frame.inVehicle = false
-		frame.unit = frame.unitOwner
-		frame.unitGUID = UnitGUID(frame.unit)
-		frame:FullUpdate()
-	end
-
-	-- Keep track of the actual players unit so we can quickly see what unit to scan
-	--[[
-	if( frame.unitOwner == "player" and ShadowUF.playerUnit ~= frame.unit ) then
-		ShadowUF.playerUnit = frame.unit
-		
-		if( not ShadowUF.db.profile.hidden.buffs and ShadowUF.db.profile.units.player.enabled and BuffFrame:IsVisible() ) then
-			PlayerFrame.unit = frame.unit
-			BuffFrame_Update() 
-		end
-	end
-	]]
-end
-
 -- Handles checking for GUID changes for doing a full update, this fixes frames sometimes showing the wrong unit when they change
 function Units:CheckUnitStatus(frame)
 	local guid = frame.unit and UnitGUID(frame.unit)
@@ -320,15 +251,8 @@ end
 -- OnAttributeChanged won't do anything because the frame is already setup, however, the active unit is non-existant
 -- while the primary unit is. So if we see they're in a vehicle with this case, we force the full update to get the vehicle change
 function Units:CheckGroupedUnitStatus(frame)
-	if( frame.inVehicle and not UnitExists(frame.unit) and UnitExists(frame.unitOwner) ) then
-		frame.inVehicle = false
-		frame.unit = frame.unitOwner
-		frame.unitGUID = guid
-		frame:FullUpdate()
-	else
-		frame.unitGUID = UnitGUID(frame.unit)
-		frame:FullUpdate()
-	end
+	frame.unitGUID = UnitGUID(frame.unit)
+	frame:FullUpdate()
 end
 
 local function ShowMenu(self)
@@ -664,14 +588,9 @@ function Units:SetHeaderAttributes(frame, type)
 						local x = config.groupSpacing * xColMod
 						local y = config.groupSpacing * yColMod
 						
-						-- When we're anchoring a new column to the bottom of naother one, the height will mess it up
-						-- if what we anchored to isn't full, by anchoring it to the top instead will get a consistent result
-						local point = columnPoint
-						if( point == "BOTTOM" ) then
-							point = config.attribPoint
-							x = x + (config.height * 5) * xColMod
-							y = y + (config.height * 5) * yColMod
-						end
+						local point = config.attribPoint
+						x = x + (config.width * 5) * xColMod
+						y = y + (config.height * 5) * yColMod
 						
 						childHeader:SetPoint(config.attribPoint, headerFrames["raid" .. id - config.groupsPerRow], point, x, y)
 					else

@@ -3,7 +3,7 @@
 ## Notes: An apple a day keeps the raptor away, or so they say
 ## Author: Shadowed, Aviana
 ## Version: Backport v.01 from v3.2.12-5-g3fb7edd
-## SavedVariables: ShadowedUFDB
+## SavedVariables: ShadowedUFDB, ShadowedUFAuraDB
 ## OptionalDeps: Ace3, LibSharedMedia-3.0, LibHealComm-3.0, AceGUI-3.0-SharedMediaWidgets, LibBanzai-2.0
 ## X-GitHub-Url: https://github.com/Aviana/ShadowedUnitFrames
 

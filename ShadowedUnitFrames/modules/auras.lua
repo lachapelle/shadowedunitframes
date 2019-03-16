@@ -2,12 +2,21 @@ local Auras = {}
 local mainHand, offHand = {time = 0}, {time = 0}
 local tempEnchantScan
 ShadowUF:RegisterModule(Auras, "auras", ShadowUF.L["Auras"])
+if not ShadowedUFAuraDB then
+	ShadowedUFAuraDB = {}
+end
+local ScanTip = CreateFrame("GameTooltip", "SUFAuraScanTip", nil, "GameTooltipTemplate")
+ScanTip:SetOwner(WorldFrame, "ANCHOR_TOP", 0,1000)
+ScanTip:SetClampedToScreen(0)
 
 function Auras:OnEnable(frame)
-	frame.auras = frame.auras or CreateFrame("Frame", frame:GetName().."Auras", frame)
+	frame.auras = frame.auras or {}
 	
 	frame:RegisterNormalEvent("PLAYER_ENTERING_WORLD", self, "Update")
 	frame:RegisterUnitEvent("UNIT_AURA", self, "Update")
+	if UnitIsUnit(frame.unitRealType,"player") then
+		frame:RegisterNormalEvent("PLAYER_AURAS_CHANGED", self, "Update")
+	end
 	frame:RegisterUpdateFunc(self, "Update")
 
 	self:UpdateFilter(frame)
@@ -245,7 +254,7 @@ local function updateButton(id, group, config)
 		button.stack:SetJustifyH("RIGHT")
 
 		button.border = button:CreateTexture(nil, "OVERLAY")
-		button.border:SetPoint("CENTER", button)		
+		button.border:SetPoint("CENTER", button)
 		
 		button.icon = button:CreateTexture(nil, "BACKGROUND")
 		button.icon:SetAllPoints(button)
@@ -279,6 +288,17 @@ end
 
 -- Let the mover access this for creating aura things
 Auras.updateButton = updateButton
+
+local function GetBuffTimeLeft(buffName)
+	local i, name = 1, GetPlayerBuffName(1)
+	while name do
+		if name == buffName then
+			return GetPlayerBuffTimeLeft(i)
+		end
+		i = i + 1
+		name = GetPlayerBuffName(i)
+	end
+end
 
 -- Create an aura anchor as well as the buttons to contain it
 local function updateGroup(self, type, config, reverseConfig)
@@ -375,6 +395,19 @@ function Auras:OnLayoutApplied(frame, config)
 end
 
 -- Temporary enchant support
+
+local function GetTempBuffName(id)
+	ScanTip:ClearLines()
+	ScanTip:SetInventoryItem("player", id)
+	for i=1,ScanTip:NumLines() do
+		local toolTipText = getglobal("SUFAuraScanTipTextLeft" .. i)
+		local buffname = string.match(toolTipText:GetText(), "^(.+)%s%([%d]+%s[%a]+%)$")
+		if buffname then
+			return buffname
+		end
+	end
+end
+
 local timeElapsed = 0
 local function updateTemporaryEnchant(frame, slot, tempData, hasEnchant, timeLeft, charges)
 	-- If there's less than a 750 millisecond differences in the times, we don't need to bother updating.
@@ -382,10 +415,17 @@ local function updateTemporaryEnchant(frame, slot, tempData, hasEnchant, timeLef
 	-- temporary enchants with that little difference, as totems don't really give pulsing auras anymore.
 	if( tempData.has and ( timeLeft < tempData.time and ( tempData.time - timeLeft ) < 750 ) and charges == tempData.charges ) then return false end
 
+	local EnchantName = GetTempBuffName(slot)
+
+	tempData.cutoff = 0
+
 	-- Some trickys magic, we can't get the start time of temporary enchants easily.
 	-- So will save the first time we find when a new enchant is added
 	if( timeLeft > tempData.time or not tempData.has ) then
-		tempData.startTime = GetTime()
+		if not ShadowedUFAuraDB[EnchantName] or ShadowedUFAuraDB[EnchantName] < timeLeft then
+			ShadowedUFAuraDB[EnchantName] = timeLeft
+		end
+		tempData.startTime = GetTime() - ((ShadowedUFAuraDB[EnchantName] - timeLeft) / 1000)
 	end
 
 	tempData.has = hasEnchant
@@ -394,19 +434,20 @@ local function updateTemporaryEnchant(frame, slot, tempData, hasEnchant, timeLef
 		
 	local config = ShadowUF.db.profile.units[frame.parent.unitType].auras[frame.type]
 	
-	-- Create any buttons we need
-	if( #(frame.buttons) < frame.temporaryEnchants ) then
-		updateButton(frame.temporaryEnchants, frame, config)
-	end
-
 	local button = frame.buttons[frame.temporaryEnchants]
+	
+	-- Create any buttons we need
+	if( not button ) then
+		updateButton(frame.temporaryEnchants, frame, config)
+		button = frame.buttons[frame.temporaryEnchants]
+	end
 	
 	-- Purple border
 	button.border:SetVertexColor(0.50, 0, 0.50)
 	
 	-- Show the cooldown ring
 	if( not ShadowUF.db.profile.auras.disableCooldown ) then
-		button.cooldown:SetCooldown(tempData.startTime, timeLeft / 1000)
+		button.cooldown:SetCooldown(tempData.startTime, (ShadowedUFAuraDB[EnchantName] / 1000))
 		button.cooldown:Show()
 	else
 		button.cooldown:Hide()
@@ -445,6 +486,9 @@ tempEnchantScan = function(self, elapsed)
 	timeElapsed = timeElapsed - 0.50
 
 	local hasMain, mainTimeLeft, mainCharges, hasOff, offTimeLeft, offCharges = GetWeaponEnchantInfo()
+
+	if hasMain and not GetTempBuffName(16) or hasOff and not GetTempBuffName(16) then return end
+
 	local numTempEnchants = ((hasMain and 1 or 0) + (hasOff and 1 or 0))
 	self.temporaryEnchants = 0
 	
@@ -503,9 +547,22 @@ local function scan(parent, frame, type, config, filter)
 		index = index + 1 
 		if filter == "HARMFUL" or filter == "HARMFUL|RAID" then
 			name, rank, texture, count, auraType, duration, timeLeft = UnitDebuff(frame.parent.unit, index, filter == "HARMFUL|RAID")
+			if UnitIsUnit("player", frame.parent.unit) and not timeLeft and name then
+				timeLeft = GetBuffTimeLeft(name)
+			end
 		else
 			name, rank, texture, count, duration, timeLeft = UnitBuff(frame.parent.unit, index, filter == "HELPFUL|RAID")
+			if UnitIsUnit("player", frame.parent.unit) and not timeLeft and name then
+				timeLeft = GetBuffTimeLeft(name)
+			end
 		end
+		
+		if duration and (not ShadowedUFAuraDB[name] or ShadowedUFAuraDB[name] < duration) then
+			ShadowedUFAuraDB[name] = duration
+		elseif not duration and timeLeft then
+			duration = ShadowedUFAuraDB[name]
+		end
+		
 		if( not name ) then break end
 		
 		if( ( not config.player ) and ( not parent.whitelist[type] and not parent.blacklist[type] or parent.whitelist[type] and parent.whitelist[name] or parent.blacklist[type] and not parent.blacklist[name] ) ) then
@@ -604,63 +661,21 @@ end
 
 Auras.anchorGroupToGroup = anchorGroupToGroup
 
-local function RefreshTimers(parent, frame, type, config, filter)
-	if( frame.totalAuras >= frame.maxAuras or not config.enabled ) then return end
-
-	local name, duration, endTime
-	for _,button in pairs(frame.buttons) do
-		if filter == "HARMFUL" or filter == "HARMFUL|RAID" then
-			name, _, _, _, _, duration, endTime = UnitDebuff(frame.parent.unit, button.auraID, filter == "HARMFUL|RAID")
-		else
-			name, _, _, _, duration, endTime = UnitBuff(frame.parent.unit, button.auraID, filter == "HELPFUL|RAID")
-		end
-		
-		if( (button.filter ~= "TEMP") and ( not config.player ) and ( not parent.whitelist[type] and not parent.blacklist[type] or parent.whitelist[type] and parent.whitelist[name] or parent.blacklist[type] and not parent.blacklist[name] ) ) then
-			
-			-- Show the cooldown ring
-			if( not ShadowUF.db.profile.auras.disableCooldown and duration and duration > 0 and config.selfTimers ) then
-				button.cooldown:SetCooldown(GetTime() + endTime - duration, duration)
-				button.cooldown:Show()
-			else
-				button.cooldown:Hide()
-			end
-
-		end
-	end
-end
-
-local function TimerUpdate(self, elapsed)
-	self.TimeSinceLastUpdate = (self.TimeSinceLastUpdate or 0) + elapsed
-	if self.TimeSinceLastUpdate > 0.5 then
-		self.TimeSinceLastUpdate = 0
-		local frame = self:GetParent()
-		local config = ShadowUF.db.profile.units[frame.unitType].auras
-		if( frame.auras.anchor ) then
-			RefreshTimers(frame.auras, frame.auras.anchor, frame.auras.primary, config[frame.auras.primary], frame.auras[frame.auras.primary].filter)
-			RefreshTimers(frame.auras, frame.auras.anchor, frame.auras.secondary, config[frame.auras.secondary], frame.auras[frame.auras.secondary].filter)
-		else
-			if( config.buffs.enabled ) then
-				RefreshTimers(frame.auras, frame.auras.buffs, "buffs", config.buffs, frame.auras.buffs.filter)
-			end
-
-			if( config.debuffs.enabled ) then
-				RefreshTimers(frame.auras, frame.auras.debuffs, "debuffs", config.debuffs, frame.auras.debuffs.filter)
-			end
-		end
-	end
-end
-
 -- Do an update and figure out what we need to scan
 function Auras:Update(frame)
 	local config = ShadowUF.db.profile.units[frame.unitType].auras
 	if( frame.auras.anchor ) then
-		frame.auras.anchor.totalAuras = frame.auras.anchor.temporaryEnchants
+		frame.auras.anchor.totalAuras = config.buffs.temporary and frame.auras.anchor.temporaryEnchants or 0
 		
 		scan(frame.auras, frame.auras.anchor, frame.auras.primary, config[frame.auras.primary], frame.auras[frame.auras.primary].filter)
 		scan(frame.auras, frame.auras.anchor, frame.auras.secondary, config[frame.auras.secondary], frame.auras[frame.auras.secondary].filter)
 	else
+		if config.buffs.temporary then
+			tempEnchantScan(frame.auras.buffs, 1)
+		end
+
 		if( config.buffs.enabled ) then
-			frame.auras.buffs.totalAuras = frame.auras.buffs.temporaryEnchants
+			frame.auras.buffs.totalAuras = config.buffs.temporary and frame.auras.buffs.temporaryEnchants or 0
 			scan(frame.auras, frame.auras.buffs, "buffs", config.buffs, frame.auras.buffs.filter)
 		end
 
@@ -671,13 +686,6 @@ function Auras:Update(frame)
 		
 		if( frame.auras.anchorAurasOn ) then
 			anchorGroupToGroup(frame, config[frame.auras.anchorAurasOn.type], frame.auras.anchorAurasOn, config[frame.auras.anchorAurasChild.type], frame.auras.anchorAurasChild)
-		end
-	end
-	if not ShadowUF.fakeUnits[frame.unitRealType] then
-		if UnitIsUnit(frame.unitRealType,"player") then
-			frame.auras:SetScript("OnUpdate", TimerUpdate)
-		else
-			frame.auras:SetScript("OnUpdate", nil)
 		end
 	end
 end

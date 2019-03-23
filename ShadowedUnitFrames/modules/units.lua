@@ -270,15 +270,11 @@ local function ShowMenu(self)
 		ToggleDropDownMenu(1, nil, _G["PartyMemberFrame" .. self.unitID .. "DropDown"], "cursor")
 	elseif( self.unitRealType == "raid" ) then
 		HideDropDownMenu(1)
-		
-		local menuFrame = FriendsDropDown
-		menuFrame.displayMode = "MENU"
-		menuFrame.initialize = RaidFrameDropDown_Initialize
-		menuFrame.userData = self.unitID
-		menuFrame.unit = self.unitOwner
-		menuFrame.name = UnitName(self.unitOwner)
-		menuFrame.id = self.unitID
-		ToggleDropDownMenu(1, nil, menuFrame, "cursor")
+		local unit = self.unitOwner
+		local name = UnitName(self.unitOwner)
+		local id = self.unitID
+		FriendsDropDown.initialize = function() UnitPopup_ShowMenu(getglobal(UIDROPDOWNMENU_OPEN_MENU), "RAID_PLAYER", unit, name, id) end
+		ToggleDropDownMenu(1, nil, FriendsDropDown, "cursor")
 	end	
 end
 

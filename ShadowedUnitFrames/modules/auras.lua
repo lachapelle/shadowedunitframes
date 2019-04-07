@@ -1,6 +1,7 @@
 local Auras = {}
 local mainHand, offHand = {time = 0}, {time = 0}
 local tempEnchantScan
+local reposition
 ShadowUF:RegisterModule(Auras, "auras", ShadowUF.L["Auras"])
 if not ShadowedUFAuraDB then
 	ShadowedUFAuraDB = {}
@@ -477,6 +478,8 @@ local function updateTemporaryEnchant(frame, slot, tempData, hasEnchant, timeLef
 	button.icon:SetTexture(GetInventoryItemTexture("player", slot))
 	button.stack:SetText(charges > 1 and charges or "")
 	button:Show()
+	
+	reposition = true
 end
 
 -- Unfortunately, temporary enchants have basically no support beyond hacks. So we will hack!
@@ -487,7 +490,7 @@ tempEnchantScan = function(self, elapsed)
 
 	local hasMain, mainTimeLeft, mainCharges, hasOff, offTimeLeft, offCharges = GetWeaponEnchantInfo()
 
-	if hasMain and not GetTempBuffName(16) or hasOff and not GetTempBuffName(16) then return end
+	if hasMain and not GetTempBuffName(16) or hasOff and not GetTempBuffName(17) then return end
 
 	local numTempEnchants = ((hasMain and 1 or 0) + (hasOff and 1 or 0))
 	self.temporaryEnchants = 0
@@ -623,7 +626,8 @@ local function scan(parent, frame, type, config, filter)
 	for i=frame.totalAuras + 1, #(frame.buttons) do frame.buttons[i]:Hide() end
 
 	-- The default 1.30 scale doesn't need special handling, after that it does
-	if( config.enlargeSelf ) then
+	if( config.enlargeSelf or reposition ) then
+		reposition = false
 		positionAllButtons(frame, config)
 	end
 end

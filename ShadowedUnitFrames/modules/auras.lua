@@ -674,7 +674,7 @@ function Auras:Update(frame)
 		scan(frame.auras, frame.auras.anchor, frame.auras.primary, config[frame.auras.primary], frame.auras[frame.auras.primary].filter)
 		scan(frame.auras, frame.auras.anchor, frame.auras.secondary, config[frame.auras.secondary], frame.auras[frame.auras.secondary].filter)
 	else
-		if config.buffs.temporary then
+		if config.buffs.temporary and frame.auras.buffs then
 			tempEnchantScan(frame.auras.buffs, 1)
 		end
 
